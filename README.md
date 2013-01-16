@@ -14,11 +14,13 @@ XML documents created by this module support a schema based on Google
 searches and the Jenkins JUnit XML reader source code. File a bug if 
 something doesn't work like you expect it to._
 
-## Using
-Install the module
+## Installation
+Clone the Git repository from Github and install it manually:
 
+    git clone https://github.com/kyrus/python-junit-xml.git
     python setup.py install
 
+## Using
 Create a test suite, add a test case, and print it to the screen:
 
     from junit_xml import TestSuite, TestCase
