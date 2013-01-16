@@ -10,5 +10,5 @@ script: python tests.py
 
 notifications:
   email:
-    - brianebeyer@gmail.com
+    - brian@kyr.us
 

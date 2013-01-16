@@ -7,7 +7,7 @@ def read(fname):
 
 setup(name='junit-xml',
 	author='Brian Beyer',
-	author_email='brianebeyer@gmail.com',
+	author_email='brian@kyr.us',
 	url='https://github.com/kyrus/python-junit-xml',
 	license='MIT',
 	packages=find_packages(),
