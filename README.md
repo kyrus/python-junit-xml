@@ -1,5 +1,7 @@
 python-junit-xml
 ================
+[![Build Status](https://travis-ci.org/kyrus/python-junit-xml.png)](https://travis-ci.org/kyrus/python-junit-xml)
+
 ## About
 A Python module for creating JUnit XML test result documents that can be
 read by tools such as Jenkins. As there is no definitive source a Jenkins 
