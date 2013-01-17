@@ -19,7 +19,15 @@ something doesn't work like you expect it to.*
 Installation
 ------------
 
-Clone the Git repository from Github and install it manually:
+Install using pip or easy_install:
+
+::
+
+	pip install junit-xml
+	or
+	easy_install junit-xml
+
+You can also clone the Git repository from Github and install it manually:
 
 ::
 
