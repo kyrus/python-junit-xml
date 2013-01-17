@@ -133,7 +133,7 @@ def verify_test_case(tc, test_case_element, expected_attributes,
     failure_message=None, failure_output=None,
     stdout=None, stderr=None):
 
-    for k, v in expected_attributes.iteritems():
+    for k, v in expected_attributes.items():
         tc.assertEqual(v, test_case_element.attributes[k].value)
     
     for k in test_case_element.attributes.keys():

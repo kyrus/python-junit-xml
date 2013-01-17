@@ -77,7 +77,7 @@ class TestSuite(object):
         # add any properties
         if self.properties:
             props_element = ET.SubElement(xml_element, "properties")
-            for k, v in self.properties.iteritems():
+            for k, v in self.properties.items():
                 attrs = { 'name' : str(k), 'value' : str(v) }
                 ET.SubElement(props_element, "property", attrs)
 
