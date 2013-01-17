@@ -1,8 +1,8 @@
+from __future__ import with_statement
 import unittest
 import os
 import tempfile
 from xml.dom import minidom
-
 from junit_xml import (TestCase, TestSuite)
 
 """Unit tests"""
@@ -17,8 +17,8 @@ def serialize_and_read(test_suites, to_file=False):
        test_suites = [test_suites]
 
     if to_file:
-        with tempfile.NamedTemporaryFile(delete=False) as f:
-            filename = f.name
+        fd, filename = tempfile.mkstemp(text=True)
+        with os.fdopen(fd, 'w') as f:
             TestSuite.to_file(f, test_suites)
             
         print("Serialized XML to temp file [%s]" % filename)
