@@ -74,6 +74,9 @@ Writing XML to a file:
 
 See the docs and unit tests for more examples.
 
+NOTE: Unicode characters identified as "illegal or discouraged" are automatically
+stripped from the XML string or file.
+
 Running the tests
 -----------------
 
