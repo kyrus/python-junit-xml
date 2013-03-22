@@ -46,7 +46,7 @@ Create a test suite, add a test case, and print it to the screen:
     test_cases = [TestCase('Test1', 'some.class.name', 123.345, 'I am stdout!', 'I am stderr!')]
     ts = TestSuite("my test suite", test_cases)
     # pretty printing is on by default but can be disabled using prettyprint=False
-    print(ts.to_xml_string())
+    print(TestSuite.to_xml_string([ts]))
 
 Produces the following output
 
@@ -69,8 +69,8 @@ Writing XML to a file:
 ::
 
     # you can also write the XML to a file and not pretty print it
-    with open('output.xml') as f:
-        ts.write_to_file(f, prettyprint=False)
+    with open('output.xml', 'w') as f:
+        TestSuite.to_file(f, [ts], prettyprint=False)
 
 See the docs and unit tests for more examples.
 
