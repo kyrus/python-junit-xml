@@ -83,6 +83,7 @@ Running the tests
 -----------------
 
 ::
-
-    python tests.py
+    # active your virtualenv
+    pip install tox
+    tox
 
