@@ -62,6 +62,17 @@ class TestSuiteTests(unittest.TestCase):
         self.assertEqual('suite2', suites[1][0].attributes['name'].value)
         verify_test_case(self, suites[1][1][0], {'name': 'Test2'})
 
+    def test_attribute_time(self):
+        tss = [TestSuite('suite1', [TestCase('Test1', 'some.class.name', 123.345),TestCase('Test2', 'some2.class.name', 123.345) ]), TestSuite('suite2', [TestCase('Test2')])]
+        suites = serialize_and_read(tss)
+
+        self.assertEqual('suite1', suites[0][0].attributes['name'].value)
+        self.assertEqual('246.69', suites[0][0].attributes['time'].value)
+
+        self.assertEqual('suite2', suites[1][0].attributes['name'].value)
+        # here the time in testsuite is "0" even there is no attribute time for testcase 
+        self.assertEqual('0', suites[1][0].attributes['time'].value)
+
         # TODO: add more tests for the other attributes and properties
 
 
