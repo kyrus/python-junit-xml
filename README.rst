@@ -53,16 +53,18 @@ Produces the following output
 ::
 
     <?xml version="1.0" ?>
-    <testsuite errors="0" failures="0" name="my test suite" tests="1">
-        <testcase classname="some.class.name" name="Test1" time="123.345000">
-            <system-out>
-                I am stdout!
-            </system-out>
-            <system-err>
-                I am stderr!
-            </system-err>
-        </testcase>
-    </testsuite>
+    <testsuites>
+        <testsuite errors="0" failures="0" name="my test suite" tests="1">
+            <testcase classname="some.class.name" name="Test1" time="123.345000">
+                <system-out>
+                    I am stdout!
+                </system-out>
+                <system-err>
+                    I am stderr!
+                </system-err>
+            </testcase>
+        </testsuite>
+    </testsuites>
 
 Writing XML to a file:
 
