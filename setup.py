@@ -13,7 +13,7 @@ setup(name='junit-xml',
 	packages=find_packages(),
 	description='Creates JUnit XML test result documents that can be read by tools such as Jenkins',
 	long_description=read('README.rst'),
-	version = "1.0",
+	version = "1.1",
 	classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
