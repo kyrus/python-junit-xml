@@ -8,7 +8,7 @@ from junit_xml import (TestCase, TestSuite)
 """Unit tests"""
 
 
-def serialize_and_read(test_suites, to_file=False):
+def serialize_and_read(test_suites, to_file=False, prettyprint=None):
     """writes the test suite to an XML string and then re-reads it using minidom,
        returning => (test suite element, list of test case elements)"""
     try:
@@ -25,7 +25,10 @@ def serialize_and_read(test_suites, to_file=False):
         xmldoc = minidom.parse(filename)
         os.remove(filename)
     else:
-        xml_string = TestSuite.to_xml_string(test_suites)
+        if prettyprint is not None:
+            xml_string = TestSuite.to_xml_string(test_suites, prettyprint=prettyprint)
+        else:
+            xml_string = TestSuite.to_xml_string(test_suites)
         print("Serialized XML to string:\n%s" % xml_string)
         xmldoc = minidom.parseString(xml_string)
 
@@ -40,6 +43,14 @@ def serialize_and_read(test_suites, to_file=False):
 class TestSuiteTests(unittest.TestCase):
     def test_single_suite_to_file(self):
         (ts, tcs) = serialize_and_read(TestSuite('test', [TestCase('Test1')]), True)[0]
+        verify_test_case(self, tcs[0], {'name': 'Test1'})
+
+    def test_single_suite_to_file_prettyprint(self):
+        (ts, tcs) = serialize_and_read(TestSuite('test', [TestCase('Test1')]), True, prettyprint=True)[0]
+        verify_test_case(self, tcs[0], {'name': 'Test1'})
+
+    def test_single_suite_to_file_no_prettyprint(self):
+        (ts, tcs) = serialize_and_read(TestSuite('test', [TestCase('Test1')]), True, prettyprint=False)[0]
         verify_test_case(self, tcs[0], {'name': 'Test1'})
 
     def test_multiple_suites_to_file(self):
@@ -63,7 +74,9 @@ class TestSuiteTests(unittest.TestCase):
         verify_test_case(self, suites[1][1][0], {'name': 'Test2'})
 
     def test_attribute_time(self):
-        tss = [TestSuite('suite1', [TestCase('Test1', 'some.class.name', 123.345),TestCase('Test2', 'some2.class.name', 123.345) ]), TestSuite('suite2', [TestCase('Test2')])]
+        tss = [TestSuite('suite1', [TestCase('Test1', 'some.class.name', 123.345),
+                                    TestCase('Test2', 'some2.class.name', 123.345)]),
+               TestSuite('suite2', [TestCase('Test2')])]
         suites = serialize_and_read(tss)
 
         self.assertEqual('suite1', suites[0][0].attributes['name'].value)
@@ -82,27 +95,27 @@ class TestCaseTests(unittest.TestCase):
         verify_test_case(self, tcs[0], {'name': 'Test1'})
 
     def test_init_classname(self):
-        (ts, tcs) = serialize_and_read(TestSuite('test',\
+        (ts, tcs) = serialize_and_read(TestSuite('test',
                                                  [TestCase('Test1', 'some.class.name')]))[0]
         verify_test_case(self, tcs[0], {'name': 'Test1', 'classname': 'some.class.name'})
 
     def test_init_classname_time(self):
-        (ts, tcs) = serialize_and_read(TestSuite('test',\
+        (ts, tcs) = serialize_and_read(TestSuite('test',
                                                  [TestCase('Test1', 'some.class.name', 123.345)]))[0]
         verify_test_case(self, tcs[0], {'name': 'Test1', 'classname': 'some.class.name', 'time': ("%f" % 123.345)})
 
     def test_init_stderr(self):
-        (ts, tcs) = serialize_and_read(TestSuite('test',\
+        (ts, tcs) = serialize_and_read(TestSuite('test',
                                                  [TestCase('Test1', 'some.class.name', 123.345,
                                                            stderr='I am stderr!')]))[0]
-        verify_test_case(self, tcs[0], {'name': 'Test1', 'classname': 'some.class.name', 'time': ("%f" % 123.345)},\
+        verify_test_case(self, tcs[0], {'name': 'Test1', 'classname': 'some.class.name', 'time': ("%f" % 123.345)},
                          stderr='I am stderr!')
 
     def test_init_stdout_stderr(self):
-        (ts, tcs) = serialize_and_read(TestSuite('test',\
+        (ts, tcs) = serialize_and_read(TestSuite('test',
                                                  [TestCase('Test1', 'some.class.name', 123.345, 'I am stdout!',
                                                            'I am stderr!')]))[0]
-        verify_test_case(self, tcs[0], {'name': 'Test1', 'classname': 'some.class.name', 'time': ("%f" % 123.345)},\
+        verify_test_case(self, tcs[0], {'name': 'Test1', 'classname': 'some.class.name', 'time': ("%f" % 123.345)},
                          stdout='I am stdout!', stderr='I am stderr!')
 
     def test_init_failure_message(self):
@@ -121,7 +134,7 @@ class TestCaseTests(unittest.TestCase):
         tc = TestCase('Failure-Message-and-Output')
         tc.add_failure_info("failure message", "I failed!")
         (ts, tcs) = serialize_and_read(TestSuite('test', [tc]))[0]
-        verify_test_case(self, tcs[0], {'name': 'Failure-Message-and-Output'},\
+        verify_test_case(self, tcs[0], {'name': 'Failure-Message-and-Output'},
                          failure_message="failure message", failure_output="I failed!")
 
     def test_init_error_message(self):
@@ -140,7 +153,7 @@ class TestCaseTests(unittest.TestCase):
         tc = TestCase('Error-Message-and-Output')
         tc.add_error_info("error message", "I errored!")
         (ts, tcs) = serialize_and_read(TestSuite('test', [tc]))[0]
-        verify_test_case(self, tcs[0], {'name': 'Error-Message-and-Output'},\
+        verify_test_case(self, tcs[0], {'name': 'Error-Message-and-Output'},
                          error_message="error message", error_output="I errored!")
 
     def test_init_legal_unicode_char(self):
