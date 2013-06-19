@@ -63,6 +63,7 @@ class TestSuite(object):
         test_suite_attributes['name'] = str(self.name)
         test_suite_attributes['failures'] = str(len([c for c in self.test_cases if c.is_failure()]))
         test_suite_attributes['errors'] = str(len([c for c in self.test_cases if c.is_error()]))
+        test_suite_attributes['time'] = str(sum(c.elapsed_sec for c in self.test_cases if c.elapsed_sec))        
         test_suite_attributes['tests'] = str(len(self.test_cases))
 
         if self.hostname:
