@@ -7,9 +7,9 @@ import xml.dom.minidom
 Based on the following understanding of what Jenkins can parse for JUnit XML files.
 
 <?xml version="1.0" encoding="utf-8"?>
-<testsuites errors="1" failures="1" tests="3" time="45">
+<testsuites errors="1" failures="1" tests="4" time="45">
     <testsuite errors="1" failures="1" hostname="localhost" id="0" name="base_test_1"
-               package="testdb" tests="3" timestamp="2012-11-15T01:02:29">
+               package="testdb" tests="4" timestamp="2012-11-15T01:02:29">
         <properties>
             <property name="assert-passed" value="1"/>
         </properties>
