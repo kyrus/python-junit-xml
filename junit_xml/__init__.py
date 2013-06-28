@@ -24,6 +24,11 @@ Based on the following understanding of what Jenkins can parse for JUnit XML fil
                 the output of the testcase
             </error>
         </testcase>
+	<testcase classname="package.directory" name="003-skipped-test" time="0">
+	    <skipped message="SKIPPED Test" type="skipped">
+                the output of the testcase
+            </skipped>	
+	</testcase>
         <testcase classname="testdb.directory" name="003-passed-test" time="10">
             <system-out>
                 I am system output
@@ -63,6 +68,7 @@ class TestSuite(object):
         test_suite_attributes['name'] = str(self.name)
         test_suite_attributes['failures'] = str(len([c for c in self.test_cases if c.is_failure()]))
         test_suite_attributes['errors'] = str(len([c for c in self.test_cases if c.is_error()]))
+	test_suite_attributes['skipped'] = str(len([c for c in self.test_cases if c.is_skipped()]))
         test_suite_attributes['time'] = str(sum(c.elapsed_sec for c in self.test_cases if c.elapsed_sec))        
         test_suite_attributes['tests'] = str(len(self.test_cases))
 
@@ -114,6 +120,16 @@ class TestSuite(object):
                 if case.error_output:
                     error_element.text = case.error_output
                 test_case_element.append(error_element)
+
+            # skippeds
+            if case.is_skipped():
+                attrs = {'type': 'skipped'}
+                if case.skipped_message:
+                    attrs['message'] = case.skipped_message
+                skipped_element = ET.Element("skipped", attrs)
+                if case.error_output:
+                    skipped_element.text = case.skipped_output
+                test_case_element.append(skipped_element)
 
             # test stdout
             if case.stdout:
@@ -187,6 +203,8 @@ class TestCase(object):
         self.error_output = None
         self.failure_message = None
         self.failure_output = None
+        self.skipped_message = None
+        self.skipped_output = None
 
     def add_error_info(self, message=None, output=None):
         """Adds an error message, output, or both to the test case"""
@@ -202,6 +220,13 @@ class TestCase(object):
         if output:
             self.failure_output = output
 
+    def add_skipped_info(self, message=None, output=None):
+        """Adds a skipped message, output, or both to the test case"""
+        if message:
+            self.skipped_message = message
+        if output:
+            self.skipped_output = output
+
     def is_failure(self):
         """returns true if this test case is a failure"""
         return self.failure_output or self.failure_message
@@ -209,3 +234,7 @@ class TestCase(object):
     def is_error(self):
         """returns true if this test case is an error"""
         return self.error_output or self.error_message
+
+    def is_skipped(self):
+        """returns true if this test case has been skipped"""
+        return self.skipped_output or self.skipped_message
