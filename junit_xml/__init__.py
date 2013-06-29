@@ -146,7 +146,7 @@ class TestSuite(object):
         return xml_element
 
     @staticmethod
-    def to_xml_string(test_suites, prettyprint=True):
+    def to_xml_string(test_suites, prettyprint=True, encoding=None):
         """Returns the string representation of the JUnit XML document"""
         try:
             iter(test_suites)
@@ -157,7 +157,7 @@ class TestSuite(object):
         for ts in test_suites:
             xml_element.append(ts.build_xml_doc())
 
-        xml_string = ET.tostring(xml_element)
+        xml_string = ET.tostring(xml_element, encoding=encoding)
         xml_string = TestSuite._clean_illegal_xml_chars(xml_string)
 
         if prettyprint:
@@ -165,9 +165,9 @@ class TestSuite(object):
         return xml_string
 
     @staticmethod
-    def to_file(file_descriptor, test_suites, prettyprint=True):
+    def to_file(file_descriptor, test_suites, prettyprint=True, encoding=None):
         """Writes the JUnit XML document to file"""
-        file_descriptor.write(TestSuite.to_xml_string(test_suites, prettyprint))
+        file_descriptor.write(TestSuite.to_xml_string(test_suites, prettyprint, encoding))
 
     @staticmethod
     def _clean_illegal_xml_chars(string_to_clean):
