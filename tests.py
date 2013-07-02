@@ -156,6 +156,25 @@ class TestCaseTests(unittest.TestCase):
         verify_test_case(self, tcs[0], {'name': 'Error-Message-and-Output'},
                          error_message="error message", error_output="I errored!")
 
+    def test_init_skipped_message(self):
+        tc = TestCase('Skipped-Message')
+        tc.add_skipped_info("skipped message")
+        (ts, tcs) = serialize_and_read(TestSuite('test', [tc]))[0]
+        verify_test_case(self, tcs[0], {'name': 'Skipped-Message'}, skipped_message="skipped message")
+
+    def test_init_skipped_output(self):
+        tc = TestCase('Skipped-Output')
+        tc.add_skipped_info(output="I skipped!")
+        (ts, tcs) = serialize_and_read(TestSuite('test', [tc]))[0]
+        verify_test_case(self, tcs[0], {'name': 'Skipped-Output'}, skipped_output="I skipped!")
+
+    def test_init_skipped(self):
+        tc = TestCase('Skipped-Message-and-Output')
+        tc.add_skipped_info("skipped message", "I skipped!")
+        (ts, tcs) = serialize_and_read(TestSuite('test', [tc]))[0]
+        verify_test_case(self, tcs[0], {'name': 'Skipped-Message-and-Output'},
+                         skipped_message="skipped message", skipped_output="I skipped!") 
+
     def test_init_legal_unicode_char(self):
         tc = TestCase('Failure-Message')
         tc.add_failure_info(u"failure message with legal unicode char: [\x22]")
@@ -174,6 +193,7 @@ class TestCaseTests(unittest.TestCase):
 def verify_test_case(tc, test_case_element, expected_attributes,
                      error_message=None, error_output=None,
                      failure_message=None, failure_output=None,
+                     skipped_message=None, skipped_output=None,
                      stdout=None, stderr=None):
     for k, v in expected_attributes.items():
         tc.assertEqual(v, test_case_element.attributes[k].value)
@@ -209,6 +229,12 @@ def verify_test_case(tc, test_case_element, expected_attributes,
 
         if failure_output:
             tc.assertEqual(failure_output, failures[0].firstChild.nodeValue.strip())
+
+        skipped = test_case_element.getElementsByTagName('skipped')
+        if skipped_message or skipped_output:
+            tc.assertTrue(len(skipped) > 0)
+        else:
+            tc.assertEqual(0, len(skipped))
 
 if __name__ == '__main__':
     unittest.main()
