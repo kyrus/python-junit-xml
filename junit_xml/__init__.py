@@ -3,6 +3,13 @@ import sys, re
 import xml.etree.ElementTree as ET
 import xml.dom.minidom
 
+try:
+    # Python 2
+    unichr
+except NameError:  # pragma: nocover
+    # Python 3
+    unichr = chr
+
 """
 Based on the following understanding of what Jenkins can parse for JUnit XML files.
 
@@ -158,7 +165,7 @@ class TestSuite(object):
             xml_element.append(ts.build_xml_doc())
 
         xml_string = ET.tostring(xml_element, encoding=encoding)
-        xml_string = TestSuite._clean_illegal_xml_chars(xml_string)
+        xml_string = TestSuite._clean_illegal_xml_chars(xml_string.decode(encoding or 'utf-8'))
 
         if prettyprint:
             xml_string = xml.dom.minidom.parseString(xml_string).toprettyxml()
