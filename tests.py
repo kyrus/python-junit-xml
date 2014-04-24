@@ -83,7 +83,7 @@ class TestSuiteTests(unittest.TestCase):
         self.assertEqual('246.69', suites[0][0].attributes['time'].value)
 
         self.assertEqual('suite2', suites[1][0].attributes['name'].value)
-        # here the time in testsuite is "0" even there is no attribute time for testcase 
+        # here the time in testsuite is "0" even there is no attribute time for testcase
         self.assertEqual('0', suites[1][0].attributes['time'].value)
 
         # TODO: add more tests for the other attributes and properties
@@ -173,7 +173,7 @@ class TestCaseTests(unittest.TestCase):
         tc.add_skipped_info("skipped message", "I skipped!")
         (ts, tcs) = serialize_and_read(TestSuite('test', [tc]))[0]
         verify_test_case(self, tcs[0], {'name': 'Skipped-Message-and-Output'},
-                         skipped_message="skipped message", skipped_output="I skipped!") 
+                         skipped_message="skipped message", skipped_output="I skipped!")
 
     def test_init_legal_unicode_char(self):
         tc = TestCase('Failure-Message')
