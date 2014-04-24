@@ -2,6 +2,7 @@ from __future__ import with_statement
 import unittest
 import os
 import tempfile
+import textwrap
 from xml.dom import minidom
 from junit_xml import (TestCase, TestSuite)
 
@@ -41,21 +42,59 @@ def serialize_and_read(test_suites, to_file=False, prettyprint=None):
 
 
 class TestSuiteTests(unittest.TestCase):
+    def test_single_suite_single_test_case(self):
+        try:
+            (ts, tcs) = serialize_and_read(TestSuite('test', TestCase('Test1')), to_file=True)[0]
+            self.fail("This should've raised an exeception")  # pragma: nocover
+        except Exception as exc:
+            self.assertEqual(str(exc), 'test_cases must be a list of test cases')
+
+    def test_single_suite_no_test_cases(self):
+        properties = {'foo': 'bar'}
+        package = 'mypackage'
+        timestamp = 1398382805
+
+        (ts, tcs) = serialize_and_read(
+            TestSuite(
+                'test',
+                [],
+                hostname='localhost',
+                id=1,
+                properties=properties,
+                package=package,
+                timestamp=timestamp
+            ),
+            to_file=True
+        )[0]
+        self.assertEqual(ts.tagName, 'testsuite')
+        self.assertEqual(ts.attributes['package'].value, package)
+        self.assertEqual(ts.attributes['timestamp'].value, str(timestamp))
+        self.assertEqual(
+            ts.childNodes[1].childNodes[1].attributes['name'].value,
+            'foo')
+        self.assertEqual(
+            ts.childNodes[1].childNodes[1].attributes['value'].value,
+            'bar')
+
     def test_single_suite_to_file(self):
-        (ts, tcs) = serialize_and_read(TestSuite('test', [TestCase('Test1')]), True)[0]
+        (ts, tcs) = serialize_and_read(TestSuite('test', [TestCase('Test1')]), to_file=True)[0]
         verify_test_case(self, tcs[0], {'name': 'Test1'})
 
     def test_single_suite_to_file_prettyprint(self):
-        (ts, tcs) = serialize_and_read(TestSuite('test', [TestCase('Test1')]), True, prettyprint=True)[0]
+        (ts, tcs) = serialize_and_read(TestSuite('test', [TestCase('Test1')]), to_file=True, prettyprint=True)[0]
+        verify_test_case(self, tcs[0], {'name': 'Test1'})
+
+    def test_single_suite_prettyprint(self):
+        (ts, tcs) = serialize_and_read(TestSuite('test', [TestCase('Test1')]), to_file=False, prettyprint=True)[0]
         verify_test_case(self, tcs[0], {'name': 'Test1'})
 
     def test_single_suite_to_file_no_prettyprint(self):
-        (ts, tcs) = serialize_and_read(TestSuite('test', [TestCase('Test1')]), True, prettyprint=False)[0]
+        (ts, tcs) = serialize_and_read(TestSuite('test', [TestCase('Test1')]), to_file=True, prettyprint=False)[0]
         verify_test_case(self, tcs[0], {'name': 'Test1'})
 
     def test_multiple_suites_to_file(self):
         tss = [TestSuite('suite1', [TestCase('Test1')]), TestSuite('suite2', [TestCase('Test2')])]
-        suites = serialize_and_read(tss, True)
+        suites = serialize_and_read(tss, to_file=True)
 
         self.assertEqual('suite1', suites[0][0].attributes['name'].value)
         verify_test_case(self, suites[0][1][0], {'name': 'Test1'})
@@ -87,6 +126,31 @@ class TestSuiteTests(unittest.TestCase):
         self.assertEqual('0', suites[1][0].attributes['time'].value)
 
         # TODO: add more tests for the other attributes and properties
+
+    def test_to_xml_string(self):
+        test_suites = [TestSuite('suite1', [TestCase('Test1')]),
+                       TestSuite('suite2', [TestCase('Test2')])]
+        xml_string = TestSuite.to_xml_string(test_suites)
+        expected_xml_string = textwrap.dedent("""
+            <?xml version="1.0" ?>
+            <testsuites>
+            \t<testsuite errors="0" failures="0" name="suite1" skipped="0" tests="1" time="0">
+            \t\t<testcase name="Test1"/>
+            \t</testsuite>
+            \t<testsuite errors="0" failures="0" name="suite2" skipped="0" tests="1" time="0">
+            \t\t<testcase name="Test2"/>
+            \t</testsuite>
+            </testsuites>
+        """.strip("\n"))
+        self.assertEqual(xml_string, expected_xml_string)
+
+    def test_to_xml_string_test_suites_not_a_list(self):
+        test_suites = TestSuite('suite1', [TestCase('Test1')])
+
+        try:
+            TestSuite.to_xml_string(test_suites)
+        except Exception as exc:
+            self.assertEqual(str(exc), 'test_suites must be a list of test suites')
 
 
 class TestCaseTests(unittest.TestCase):
@@ -167,6 +231,17 @@ class TestCaseTests(unittest.TestCase):
         tc.add_skipped_info(output="I skipped!")
         (ts, tcs) = serialize_and_read(TestSuite('test', [tc]))[0]
         verify_test_case(self, tcs[0], {'name': 'Skipped-Output'}, skipped_output="I skipped!")
+
+    def test_init_skipped_err_output(self):
+        tc = TestCase('Skipped-Output')
+        tc.add_skipped_info(output="I skipped!")
+        tc.add_error_info(output="I skipped with an error!")
+        (ts, tcs) = serialize_and_read(TestSuite('test', [tc]))[0]
+        verify_test_case(
+            self, tcs[0],
+            {'name': 'Skipped-Output'},
+            skipped_output="I skipped!",
+            error_output="I skipped with an error!")
 
     def test_init_skipped(self):
         tc = TestCase('Skipped-Message-and-Output')
