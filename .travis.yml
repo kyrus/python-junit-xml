@@ -1,10 +1,18 @@
 language: python
 
-python:
-  - 2.6
-  - 2.7
+env:
+    - TOXENV=py26
+    - TOXENV=py27
+    - TOXENV=pypy
+    - TOXENV=py33
+    # - TOXENV=py34  # No support on Travis-Ci at this time
+    - TOXENV=cover
 
-script: python tests.py
+install:
+    - travis_retry pip install tox==1.6.1
+
+script:
+    - travis_retry tox
 
 notifications:
   email:
