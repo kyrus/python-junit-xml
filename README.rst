@@ -39,7 +39,7 @@ Using
 
 Create a test suite, add a test case, and print it to the screen:
 
-::
+.. code-block:: python
 
     from junit_xml import TestSuite, TestCase
 
@@ -50,7 +50,7 @@ Create a test suite, add a test case, and print it to the screen:
 
 Produces the following output
 
-::
+.. code-block:: xml
 
     <?xml version="1.0" ?>
     <testsuites>
@@ -68,7 +68,7 @@ Produces the following output
 
 Writing XML to a file:
 
-::
+.. code-block:: python
 
     # you can also write the XML to a file and not pretty print it
     with open('output.xml', 'w') as f:
