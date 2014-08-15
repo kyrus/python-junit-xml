@@ -5,7 +5,7 @@ env:
     - TOXENV=py27
     - TOXENV=pypy
     - TOXENV=py33
-    # - TOXENV=py34  # No support on Travis-Ci at this time
+    - TOXENV=py34
     - TOXENV=cover
 
 install:
@@ -17,4 +17,3 @@ script:
 notifications:
   email:
     - brian@kyr.us
-
