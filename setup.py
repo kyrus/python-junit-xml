@@ -25,5 +25,8 @@ setup(name='junit-xml',
         'Topic :: Software Development :: Build Tools',
         'Topic :: Software Development :: Testing',
 	    ],
-	)
+    install_requires=[
+        'six'
+        ]
+    )
 
