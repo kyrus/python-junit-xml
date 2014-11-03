@@ -4,6 +4,9 @@ import os
 import tempfile
 import textwrap
 from xml.dom import minidom
+
+from six import u
+
 from junit_xml import (TestCase, TestSuite)
 
 """Unit tests"""
@@ -252,17 +255,17 @@ class TestCaseTests(unittest.TestCase):
 
     def test_init_legal_unicode_char(self):
         tc = TestCase('Failure-Message')
-        tc.add_failure_info(u"failure message with legal unicode char: [\x22]")
+        tc.add_failure_info(u("failure message with legal unicode char: [\x22]"))
         (ts, tcs) = serialize_and_read(TestSuite('test', [tc]))[0]
         verify_test_case(self, tcs[0], {'name': 'Failure-Message'},
-                         failure_message=u"failure message with legal unicode char: [\x22]")
+                         failure_message=u("failure message with legal unicode char: [\x22]"))
 
     def test_init_illegal_unicode_char(self):
         tc = TestCase('Failure-Message')
-        tc.add_failure_info(u"failure message with illegal unicode char: [\x02]")
+        tc.add_failure_info(u("failure message with illegal unicode char: [\x02]"))
         (ts, tcs) = serialize_and_read(TestSuite('test', [tc]))[0]
         verify_test_case(self, tcs[0], {'name': 'Failure-Message'},
-                         failure_message=u"failure message with illegal unicode char: []")
+                         failure_message=u("failure message with illegal unicode char: []"))
 
 
 def verify_test_case(tc, test_case_element, expected_attributes,

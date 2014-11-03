@@ -3,6 +3,8 @@ import sys, re
 import xml.etree.ElementTree as ET
 import xml.dom.minidom
 
+from six import u
+
 try:
     # Python 2
     unichr
@@ -193,7 +195,7 @@ class TestSuite(object):
                           for (low, high) in illegal_unichrs
                           if low < sys.maxunicode]
 
-        illegal_xml_re = re.compile(u'[%s]' % u''.join(illegal_ranges))
+        illegal_xml_re = re.compile(u('[%s]') % u('').join(illegal_ranges))
         return illegal_xml_re.sub('', string_to_clean)
 
 
