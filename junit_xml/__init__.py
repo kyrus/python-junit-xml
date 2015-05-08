@@ -136,7 +136,7 @@ class TestSuite(object):
                 if case.skipped_message:
                     attrs['message'] = case.skipped_message
                 skipped_element = ET.Element("skipped", attrs)
-                if case.error_output:
+                if case.skipped_output:
                     skipped_element.text = case.skipped_output
                 test_case_element.append(skipped_element)
 
