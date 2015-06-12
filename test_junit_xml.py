@@ -136,7 +136,7 @@ class TestSuiteTests(unittest.TestCase):
         xml_string = TestSuite.to_xml_string(test_suites)
         expected_xml_string = textwrap.dedent("""
             <?xml version="1.0" ?>
-            <testsuites>
+            <testsuites errors="0" failures="0" skipped="0" tests="2" time="0.0">
             \t<testsuite errors="0" failures="0" name="suite1" skipped="0" tests="1" time="0">
             \t\t<testcase name="Test1"/>
             \t</testsuite>

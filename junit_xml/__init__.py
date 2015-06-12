@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from collections import defaultdict
 import sys, re
 import xml.etree.ElementTree as ET
 import xml.dom.minidom
@@ -33,11 +34,11 @@ Based on the following understanding of what Jenkins can parse for JUnit XML fil
                 the output of the testcase
             </error>
         </testcase>
-	<testcase classname="package.directory" name="003-skipped-test" time="0">
-	    <skipped message="SKIPPED Test" type="skipped">
+        <testcase classname="package.directory" name="003-skipped-test" time="0">
+            <skipped message="SKIPPED Test" type="skipped">
                 the output of the testcase
-            </skipped>	
-	</testcase>
+            </skipped>
+        </testcase>
         <testcase classname="testdb.directory" name="003-passed-test" time="10">
             <system-out>
                 I am system output
@@ -163,8 +164,16 @@ class TestSuite(object):
             raise Exception('test_suites must be a list of test suites')
 
         xml_element = ET.Element("testsuites")
+        attributes = defaultdict(int)
         for ts in test_suites:
-            xml_element.append(ts.build_xml_doc())
+            ts_xml = ts.build_xml_doc()
+            for key in ['failures', 'errors', 'skipped', 'tests']:
+              attributes[key] += int(ts_xml.get(key, 0))
+            for key in ['time']:
+              attributes[key] += float(ts_xml.get(key, 0))
+            xml_element.append(ts_xml)
+        for key, value in attributes.iteritems():
+          xml_element.set(key, str(value))
 
         xml_string = ET.tostring(xml_element, encoding=encoding)
         xml_string = TestSuite._clean_illegal_xml_chars(xml_string.decode(encoding or 'utf-8'))
