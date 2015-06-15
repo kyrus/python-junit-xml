@@ -4,7 +4,7 @@ import sys, re
 import xml.etree.ElementTree as ET
 import xml.dom.minidom
 
-from six import u
+from six import u, iteritems
 
 try:
     # Python 2
@@ -172,7 +172,7 @@ class TestSuite(object):
             for key in ['time']:
               attributes[key] += float(ts_xml.get(key, 0))
             xml_element.append(ts_xml)
-        for key, value in attributes.iteritems():
+        for key, value in iteritems(attributes):
           xml_element.set(key, str(value))
 
         xml_string = ET.tostring(xml_element, encoding=encoding)
