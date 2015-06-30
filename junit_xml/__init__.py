@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: UTF-8 -*-
 from collections import defaultdict
 import sys, re
 import xml.etree.ElementTree as ET
@@ -52,10 +53,25 @@ Based on the following understanding of what Jenkins can parse for JUnit XML fil
 """
 
 
-class TestSuite(object):
-    """Suite of test cases"""
+def decode(var, encoding):
+    if isinstance(var, unicode):
+        ret = var
+    elif isinstance(var, str):
+        if encoding:
+            ret = var.decode(encoding)
+        else:
+            ret = unicode(var)
+    else:
+        ret = unicode(var)
+    return ret
 
-    def __init__(self, name, test_cases=None, hostname=None, id=None,\
+
+class TestSuite(object):
+    '''Suite of test cases.
+    Can handle unicode strings or binary strings if their encoding is provided.
+    '''
+
+    def __init__(self, name, test_cases=None, hostname=None, id=None, \
                  package=None, timestamp=None, properties=None):
         self.name = name
         if not test_cases:
@@ -71,11 +87,18 @@ class TestSuite(object):
         self.timestamp = timestamp
         self.properties = properties
 
-    def build_xml_doc(self):
-        """Builds the XML document for the JUnit test suite"""
+
+    def build_xml_doc(self, encoding=None):
+        '''
+        Builds the XML document for the JUnit test suite.
+        Produces clean unicode strings and decodes non-unicode with the help of encoding.
+        @param encoding: Used to decode encoded strings.
+        @return: XML document with unicode string elements
+        '''
+
         # build the test suite element
         test_suite_attributes = dict()
-        test_suite_attributes['name'] = str(self.name)
+        test_suite_attributes['name'] = decode(self.name, encoding)
         test_suite_attributes['failures'] = str(len([c for c in self.test_cases if c.is_failure()]))
         test_suite_attributes['errors'] = str(len([c for c in self.test_cases if c.is_error()]))
         test_suite_attributes['skipped'] = str(len([c for c in self.test_cases if c.is_skipped()]))
@@ -83,13 +106,13 @@ class TestSuite(object):
         test_suite_attributes['tests'] = str(len(self.test_cases))
 
         if self.hostname:
-            test_suite_attributes['hostname'] = str(self.hostname)
+            test_suite_attributes['hostname'] = decode(self.hostname, encoding)
         if self.id:
-            test_suite_attributes['id'] = str(self.id)
+            test_suite_attributes['id'] = decode(self.id, encoding)
         if self.package:
-            test_suite_attributes['package'] = str(self.package)
+            test_suite_attributes['package'] = decode(self.package, encoding)
         if self.timestamp:
-            test_suite_attributes['timestamp'] = str(self.timestamp)
+            test_suite_attributes['timestamp'] = unicode(self.timestamp)
 
         xml_element = ET.Element("testsuite", test_suite_attributes)
 
@@ -97,17 +120,17 @@ class TestSuite(object):
         if self.properties:
             props_element = ET.SubElement(xml_element, "properties")
             for k, v in self.properties.items():
-                attrs = {'name': str(k), 'value': str(v)}
+                attrs = {'name': decode(k, encoding), 'value': decode(v, encoding)}
                 ET.SubElement(props_element, "property", attrs)
 
         # test cases
         for case in self.test_cases:
             test_case_attributes = dict()
-            test_case_attributes['name'] = str(case.name)
+            test_case_attributes['name'] = decode(case.name, encoding)
             if case.elapsed_sec:
                 test_case_attributes['time'] = "%f" % case.elapsed_sec
             if case.classname:
-                test_case_attributes['classname'] = str(case.classname)
+                test_case_attributes['classname'] = decode(case.classname, encoding)
 
             test_case_element = ET.SubElement(xml_element, "testcase", test_case_attributes)
 
@@ -115,49 +138,53 @@ class TestSuite(object):
             if case.is_failure():
                 attrs = {'type': 'failure'}
                 if case.failure_message:
-                    attrs['message'] = case.failure_message
+                    attrs['message'] = decode(case.failure_message, encoding)
                 failure_element = ET.Element("failure", attrs)
                 if case.failure_output:
-                    failure_element.text = case.failure_output
+                    failure_element.text = decode(case.failure_output, encoding)
                 test_case_element.append(failure_element)
 
             # errors
             if case.is_error():
                 attrs = {'type': 'error'}
                 if case.error_message:
-                    attrs['message'] = case.error_message
+                    attrs['message'] = decode(case.error_message, encoding)
                 error_element = ET.Element("error", attrs)
                 if case.error_output:
-                    error_element.text = case.error_output
+                    error_element.text = decode(case.error_output, encoding)
                 test_case_element.append(error_element)
 
             # skippeds
             if case.is_skipped():
                 attrs = {'type': 'skipped'}
                 if case.skipped_message:
-                    attrs['message'] = case.skipped_message
+                    attrs['message'] = decode(case.skipped_message, encoding)
                 skipped_element = ET.Element("skipped", attrs)
                 if case.skipped_output:
-                    skipped_element.text = case.skipped_output
+                    skipped_element.text = decode(case.skipped_output, encoding)
                 test_case_element.append(skipped_element)
 
             # test stdout
             if case.stdout:
                 stdout_element = ET.Element("system-out")
-                stdout_element.text = case.stdout
+                stdout_element.text = decode(case.stdout, encoding)
                 test_case_element.append(stdout_element)
 
             # test stderr
             if case.stderr:
                 stderr_element = ET.Element("system-err")
-                stderr_element.text = case.stderr
+                stderr_element.text = decode(case.stderr, encoding)
                 test_case_element.append(stderr_element)
 
         return xml_element
 
     @staticmethod
     def to_xml_string(test_suites, prettyprint=True, encoding=None):
-        """Returns the string representation of the JUnit XML document"""
+        '''Returns the string representation of the JUnit XML document.
+        @param encoding: The encoding of the input.
+        @return: unicode string
+        '''
+
         try:
             iter(test_suites)
         except TypeError:
@@ -166,7 +193,7 @@ class TestSuite(object):
         xml_element = ET.Element("testsuites")
         attributes = defaultdict(int)
         for ts in test_suites:
-            ts_xml = ts.build_xml_doc()
+            ts_xml = ts.build_xml_doc(encoding=encoding)
             for key in ['failures', 'errors', 'skipped', 'tests']:
               attributes[key] += int(ts_xml.get(key, 0))
             for key in ['time']:
@@ -176,21 +203,39 @@ class TestSuite(object):
           xml_element.set(key, str(value))
 
         xml_string = ET.tostring(xml_element, encoding=encoding)
+        # is encoded now
         xml_string = TestSuite._clean_illegal_xml_chars(xml_string.decode(encoding or 'utf-8'))
+        # is unicode now
 
         if prettyprint:
-            xml_string = xml.dom.minidom.parseString(xml_string).toprettyxml()
+            # minidom.parseString() works just on correctly encoded binary strings
+            xml_string = xml_string.encode(encoding or 'utf-8')
+            xml_string = xml.dom.minidom.parseString(xml_string)
+            # toprettyxml() produces unicode if no encoding is being passed or binary string with an encoding
+            xml_string = xml_string.toprettyxml(encoding=encoding)
+            if encoding:
+                xml_string = xml_string.decode(encoding)
+            # is unicode now
         return xml_string
 
     @staticmethod
     def to_file(file_descriptor, test_suites, prettyprint=True, encoding=None):
-        """Writes the JUnit XML document to file"""
-        file_descriptor.write(TestSuite.to_xml_string(test_suites, prettyprint, encoding))
+        '''
+        Writes the JUnit XML document to a file.
+        '''
+        xml_string = TestSuite.to_xml_string(test_suites, prettyprint=prettyprint,
+                                             encoding=encoding)
+        # has problems with encoded str with non-ascii (non-default-encoding) characters!
+        file_descriptor.write(xml_string)
 
     @staticmethod
     def _clean_illegal_xml_chars(string_to_clean):
-        """Removes any illegal unicode characters from the given XML string"""
-        # see http://stackoverflow.com/questions/1707890/fast-way-to-filter-illegal-xml-unicode-chars-in-python
+        '''
+        Removes any illegal unicode characters from the given XML string.
+        
+        @see: http://stackoverflow.com/questions/1707890/fast-way-to-filter-illegal-xml-unicode-chars-in-python
+        '''
+
         illegal_unichrs = [(0x00, 0x08), (0x0B, 0x1F), (0x7F, 0x84), (0x86, 0x9F),
                            (0xD800, 0xDFFF), (0xFDD0, 0xFDDF), (0xFFFE, 0xFFFF),
                            (0x1FFFE, 0x1FFFF), (0x2FFFE, 0x2FFFF), (0x3FFFE, 0x3FFFF),

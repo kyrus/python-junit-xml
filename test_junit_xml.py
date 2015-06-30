@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 from __future__ import with_statement
 import unittest
 import os
@@ -8,11 +9,12 @@ from xml.dom import minidom
 from six import u
 
 from junit_xml import (TestCase, TestSuite)
+import codecs
 
 """Unit tests"""
 
 
-def serialize_and_read(test_suites, to_file=False, prettyprint=None):
+def serialize_and_read(test_suites, to_file=False, prettyprint=None, encoding=None):
     """writes the test suite to an XML string and then re-reads it using minidom,
        returning => (test suite element, list of test case elements)"""
     try:
@@ -22,19 +24,30 @@ def serialize_and_read(test_suites, to_file=False, prettyprint=None):
 
     if to_file:
         fd, filename = tempfile.mkstemp(text=True)
-        with os.fdopen(fd, 'w') as f:
-            TestSuite.to_file(f, test_suites)
-
+        os.close(fd)
+        with codecs.open(filename, mode='w', encoding=encoding) as f:
+            TestSuite.to_file(f, test_suites, prettyprint=prettyprint, encoding=encoding)
         print("Serialized XML to temp file [%s]" % filename)
         xmldoc = minidom.parse(filename)
         os.remove(filename)
     else:
-        if prettyprint is not None:
-            xml_string = TestSuite.to_xml_string(test_suites, prettyprint=prettyprint)
-        else:
-            xml_string = TestSuite.to_xml_string(test_suites)
+        xml_string = TestSuite.to_xml_string(test_suites, prettyprint=prettyprint,
+                                             encoding=encoding)
+        assert isinstance(xml_string, unicode)
         print("Serialized XML to string:\n%s" % xml_string)
+        if encoding:
+            xml_string = xml_string.encode(encoding=encoding)
         xmldoc = minidom.parseString(xml_string)
+
+    def remove_blanks(node):
+        for x in node.childNodes:
+            if x.nodeType == minidom.Node.TEXT_NODE:
+                if x.nodeValue:
+                    x.nodeValue = x.nodeValue.strip()
+            elif x.nodeType == minidom.Node.ELEMENT_NODE:
+                remove_blanks(x)
+    remove_blanks(xmldoc)
+    xmldoc.normalize()
 
     ret = []
     suites = xmldoc.getElementsByTagName("testsuites")[0]
@@ -67,17 +80,108 @@ class TestSuiteTests(unittest.TestCase):
                 package=package,
                 timestamp=timestamp
             ),
-            to_file=True
+            to_file=True,
+            prettyprint=True
         )[0]
         self.assertEqual(ts.tagName, 'testsuite')
         self.assertEqual(ts.attributes['package'].value, package)
         self.assertEqual(ts.attributes['timestamp'].value, str(timestamp))
         self.assertEqual(
-            ts.childNodes[1].childNodes[1].attributes['name'].value,
+            ts.childNodes[0].childNodes[0].attributes['name'].value,
             'foo')
         self.assertEqual(
-            ts.childNodes[1].childNodes[1].attributes['value'].value,
+            ts.childNodes[0].childNodes[0].attributes['value'].value,
             'bar')
+
+    def test_single_suite_no_test_cases_utf8_encoded(self):
+        properties = {'foo': 'bar'}
+        package = u'mypäckage'.encode('utf-8')
+        timestamp = 1398382805
+
+        (ts, tcs) = serialize_and_read(
+            TestSuite(
+                u'testä'.encode('utf-8'),
+                [],
+                hostname='localhost',
+                id=1,
+                properties=properties,
+                package=package,
+                timestamp=timestamp
+            ),
+            to_file=True,
+            encoding='utf-8',
+            prettyprint=True
+        )[0]
+        self.assertEqual(ts.tagName, 'testsuite')
+        self.assertEqual(ts.attributes['package'].value.encode('utf-8'), package)
+        self.assertEqual(ts.attributes['timestamp'].value, str(timestamp))
+        self.assertEqual(
+            ts.childNodes[0].childNodes[0].attributes['name'].value,
+            'foo')
+        self.assertEqual(
+            ts.childNodes[0].childNodes[0].attributes['value'].value,
+            'bar')
+
+
+    def test_single_suite_no_test_cases_utf8(self):
+        properties = {'foö': 'bär'}
+        package = 'mypäckage'
+        timestamp = 1398382805
+
+        test_suite = TestSuite(
+                'äöü',
+                [],
+                hostname='löcalhost',
+                id='äöü',
+                properties=properties,
+                package=package,
+                timestamp=timestamp
+            )
+        (ts, tcs) = serialize_and_read(
+            test_suite,
+            to_file=True,
+            prettyprint=True,
+            encoding='utf-8'
+        )[0]
+        self.assertEqual(ts.tagName, 'testsuite')
+        self.assertEqual(ts.attributes['package'].value.encode('utf-8'), package)
+        self.assertEqual(ts.attributes['timestamp'].value, str(timestamp))
+        self.assertEqual(
+            ts.childNodes[0].childNodes[0].attributes['name'].value.encode('utf-8'),
+            'foö')
+        self.assertEqual(
+            ts.childNodes[0].childNodes[0].attributes['value'].value.encode('utf-8'),
+            'bär')
+
+
+    def test_single_suite_no_test_cases_unicode(self):
+        properties = {u'foö': u'bär'}
+        package = u'mypäckage'
+        timestamp = 1398382805
+
+        (ts, tcs) = serialize_and_read(
+            TestSuite(
+                u'äöü',
+                [],
+                hostname=u'löcalhost',
+                id=u'äöü',
+                properties=properties,
+                package=package,
+                timestamp=timestamp
+            ),
+            to_file=True,
+            prettyprint=True,
+            encoding='utf-8'
+        )[0]
+        self.assertEqual(ts.tagName, 'testsuite')
+        self.assertEqual(ts.attributes['package'].value, package)
+        self.assertEqual(ts.attributes['timestamp'].value, str(timestamp))
+        self.assertEqual(
+            ts.childNodes[0].childNodes[0].attributes['name'].value,
+            u'foö')
+        self.assertEqual(
+            ts.childNodes[0].childNodes[0].attributes['value'].value,
+            u'bär')
 
     def test_single_suite_to_file(self):
         (ts, tcs) = serialize_and_read(TestSuite('test', [TestCase('Test1')]), to_file=True)[0]
@@ -134,6 +238,7 @@ class TestSuiteTests(unittest.TestCase):
         test_suites = [TestSuite('suite1', [TestCase('Test1')]),
                        TestSuite('suite2', [TestCase('Test2')])]
         xml_string = TestSuite.to_xml_string(test_suites)
+        self.assertTrue(isinstance(xml_string, unicode))
         expected_xml_string = textwrap.dedent("""
             <?xml version="1.0" ?>
             <testsuites errors="0" failures="0" skipped="0" tests="2" time="0.0">
@@ -266,6 +371,29 @@ class TestCaseTests(unittest.TestCase):
         (ts, tcs) = serialize_and_read(TestSuite('test', [tc]))[0]
         verify_test_case(self, tcs[0], {'name': 'Failure-Message'},
                          failure_message=u("failure message with illegal unicode char: []"))
+
+    def test_init_utf8(self):
+        tc = TestCase('Test äöü', 'some.class.name.äöü', 123.345, 'I am stdöüt!', 'I am stdärr!')
+        tc.add_skipped_info(message='Skipped äöü', output="I skippäd!")
+        tc.add_error_info(message='Skipped error äöü', output="I skippäd with an error!")
+        test_suite = TestSuite('Test UTF-8', [tc])
+        (ts, tcs) = serialize_and_read(test_suite, encoding='utf-8')[0]
+        verify_test_case(self, tcs[0], {'name': u'Test äöü', 'classname': u'some.class.name.äöü', 'time': ("%f" % 123.345)},
+                         stdout=u'I am stdöüt!', stderr=u'I am stdärr!',
+                         skipped_message=u'Skipped äöü', skipped_output=u"I skippäd!",
+                         error_message=u'Skipped error äöü', error_output=u"I skippäd with an error!")
+
+    def test_init_unicode(self):
+        tc = TestCase(u'Test äöü', u'some.class.name.äöü', 123.345, u'I am stdöüt!', u'I am stdärr!')
+        tc.add_skipped_info(message=u'Skipped äöü', output=u"I skippäd!")
+        tc.add_error_info(message=u'Skipped error äöü', output=u"I skippäd with an error!")
+
+        (ts, tcs) = serialize_and_read(TestSuite('Test Unicode',
+                                                 [tc]))[0]
+        verify_test_case(self, tcs[0], {'name': u'Test äöü', 'classname': u'some.class.name.äöü', 'time': ("%f" % 123.345)},
+                         stdout=u'I am stdöüt!', stderr=u'I am stdärr!',
+                         skipped_message=u'Skipped äöü', skipped_output=u"I skippäd!",
+                         error_message=u'Skipped error äöü', error_output=u"I skippäd with an error!")
 
 
 def verify_test_case(tc, test_case_element, expected_attributes,
