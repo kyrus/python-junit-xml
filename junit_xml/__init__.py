@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from collections import defaultdict
-import sys, re
+import sys
+import re
 import xml.etree.ElementTree as ET
 import xml.dom.minidom
 
@@ -14,32 +15,32 @@ except NameError:  # pragma: nocover
     unichr = chr
 
 """
-Based on the following understanding of what Jenkins can parse for JUnit XML files.
+Based on the understanding of what Jenkins can parse for JUnit XML files.
 
 <?xml version="1.0" encoding="utf-8"?>
 <testsuites errors="1" failures="1" tests="4" time="45">
-    <testsuite errors="1" failures="1" hostname="localhost" id="0" name="base_test_1"
+    <testsuite errors="1" failures="1" hostname="localhost" id="0" name="test1"
                package="testdb" tests="4" timestamp="2012-11-15T01:02:29">
         <properties>
             <property name="assert-passed" value="1"/>
         </properties>
-        <testcase classname="testdb.directory" name="001-passed-test" time="10"/>
-        <testcase classname="testdb.directory" name="002-failed-test" time="20">
-            <failure message="Assertion FAILED: some failed assert" type="failure">
+        <testcase classname="testdb.directory" name="1-passed-test" time="10"/>
+        <testcase classname="testdb.directory" name="2-failed-test" time="20">
+            <failure message="Assertion FAILED: failed assert" type="failure">
                 the output of the testcase
             </failure>
         </testcase>
-        <testcase classname="package.directory" name="003-errord-test" time="15">
-            <error message="Assertion ERROR: some error assert" type="error">
+        <testcase classname="package.directory" name="3-errord-test" time="15">
+            <error message="Assertion ERROR: error assert" type="error">
                 the output of the testcase
             </error>
         </testcase>
-        <testcase classname="package.directory" name="003-skipped-test" time="0">
+        <testcase classname="package.directory" name="3-skipped-test" time="0">
             <skipped message="SKIPPED Test" type="skipped">
                 the output of the testcase
             </skipped>
         </testcase>
-        <testcase classname="testdb.directory" name="003-passed-test" time="10">
+        <testcase classname="testdb.directory" name="3-passed-test" time="10">
             <system-out>
                 I am system output
             </system-out>
@@ -55,7 +56,7 @@ Based on the following understanding of what Jenkins can parse for JUnit XML fil
 class TestSuite(object):
     """Suite of test cases"""
 
-    def __init__(self, name, test_cases=None, hostname=None, id=None,\
+    def __init__(self, name, test_cases=None, hostname=None, id=None,
                  package=None, timestamp=None, properties=None):
         self.name = name
         if not test_cases:
@@ -76,10 +77,14 @@ class TestSuite(object):
         # build the test suite element
         test_suite_attributes = dict()
         test_suite_attributes['name'] = str(self.name)
-        test_suite_attributes['failures'] = str(len([c for c in self.test_cases if c.is_failure()]))
-        test_suite_attributes['errors'] = str(len([c for c in self.test_cases if c.is_error()]))
-        test_suite_attributes['skipped'] = str(len([c for c in self.test_cases if c.is_skipped()]))
-        test_suite_attributes['time'] = str(sum(c.elapsed_sec for c in self.test_cases if c.elapsed_sec))
+        test_suite_attributes['failures'] = \
+            str(len([c for c in self.test_cases if c.is_failure()]))
+        test_suite_attributes['errors'] = \
+            str(len([c for c in self.test_cases if c.is_error()]))
+        test_suite_attributes['skipped'] = \
+            str(len([c for c in self.test_cases if c.is_skipped()]))
+        test_suite_attributes['time'] = \
+            str(sum(c.elapsed_sec for c in self.test_cases if c.elapsed_sec))
         test_suite_attributes['tests'] = str(len(self.test_cases))
 
         if self.hostname:
@@ -109,7 +114,8 @@ class TestSuite(object):
             if case.classname:
                 test_case_attributes['classname'] = str(case.classname)
 
-            test_case_element = ET.SubElement(xml_element, "testcase", test_case_attributes)
+            test_case_element = ET.SubElement(
+                xml_element, "testcase", test_case_attributes)
 
             # failures
             if case.is_failure():
@@ -168,15 +174,16 @@ class TestSuite(object):
         for ts in test_suites:
             ts_xml = ts.build_xml_doc()
             for key in ['failures', 'errors', 'skipped', 'tests']:
-              attributes[key] += int(ts_xml.get(key, 0))
+                attributes[key] += int(ts_xml.get(key, 0))
             for key in ['time']:
-              attributes[key] += float(ts_xml.get(key, 0))
+                attributes[key] += float(ts_xml.get(key, 0))
             xml_element.append(ts_xml)
         for key, value in iteritems(attributes):
-          xml_element.set(key, str(value))
+            xml_element.set(key, str(value))
 
         xml_string = ET.tostring(xml_element, encoding=encoding)
-        xml_string = TestSuite._clean_illegal_xml_chars(xml_string.decode(encoding or 'utf-8'))
+        xml_string = TestSuite._clean_illegal_xml_chars(
+            xml_string.decode(encoding or 'utf-8'))
 
         if prettyprint:
             xml_string = xml.dom.minidom.parseString(xml_string).toprettyxml()
@@ -185,20 +192,22 @@ class TestSuite(object):
     @staticmethod
     def to_file(file_descriptor, test_suites, prettyprint=True, encoding=None):
         """Writes the JUnit XML document to file"""
-        file_descriptor.write(TestSuite.to_xml_string(test_suites, prettyprint, encoding))
+        file_descriptor.write(
+            TestSuite.to_xml_string(test_suites, prettyprint, encoding))
 
     @staticmethod
     def _clean_illegal_xml_chars(string_to_clean):
         """Removes any illegal unicode characters from the given XML string"""
-        # see http://stackoverflow.com/questions/1707890/fast-way-to-filter-illegal-xml-unicode-chars-in-python
-        illegal_unichrs = [(0x00, 0x08), (0x0B, 0x1F), (0x7F, 0x84), (0x86, 0x9F),
-                           (0xD800, 0xDFFF), (0xFDD0, 0xFDDF), (0xFFFE, 0xFFFF),
-                           (0x1FFFE, 0x1FFFF), (0x2FFFE, 0x2FFFF), (0x3FFFE, 0x3FFFF),
-                           (0x4FFFE, 0x4FFFF), (0x5FFFE, 0x5FFFF), (0x6FFFE, 0x6FFFF),
-                           (0x7FFFE, 0x7FFFF), (0x8FFFE, 0x8FFFF), (0x9FFFE, 0x9FFFF),
-                           (0xAFFFE, 0xAFFFF), (0xBFFFE, 0xBFFFF), (0xCFFFE, 0xCFFFF),
-                           (0xDFFFE, 0xDFFFF), (0xEFFFE, 0xEFFFF), (0xFFFFE, 0xFFFFF),
-                           (0x10FFFE, 0x10FFFF)]
+        # see https://stackoverflow.com/q/1707890
+        illegal_unichrs = [
+            (0x00, 0x08), (0x0B, 0x1F), (0x7F, 0x84), (0x86, 0x9F),
+            (0xD800, 0xDFFF), (0xFDD0, 0xFDDF), (0xFFFE, 0xFFFF),
+            (0x1FFFE, 0x1FFFF), (0x2FFFE, 0x2FFFF), (0x3FFFE, 0x3FFFF),
+            (0x4FFFE, 0x4FFFF), (0x5FFFE, 0x5FFFF), (0x6FFFE, 0x6FFFF),
+            (0x7FFFE, 0x7FFFF), (0x8FFFE, 0x8FFFF), (0x9FFFE, 0x9FFFF),
+            (0xAFFFE, 0xAFFFF), (0xBFFFE, 0xBFFFF), (0xCFFFE, 0xCFFFF),
+            (0xDFFFE, 0xDFFFF), (0xEFFFE, 0xEFFFF), (0xFFFFE, 0xFFFFF),
+            (0x10FFFE, 0x10FFFF)]
 
         illegal_ranges = ["%s-%s" % (unichr(low), unichr(high))
                           for (low, high) in illegal_unichrs
@@ -211,7 +220,8 @@ class TestSuite(object):
 class TestCase(object):
     """A JUnit test case with a result and possibly some stdout or stderr"""
 
-    def __init__(self, name, classname=None, elapsed_sec=None, stdout=None, stderr=None):
+    def __init__(self, name, classname=None, elapsed_sec=None, stdout=None,
+                 stderr=None):
         self.name = name
         self.elapsed_sec = elapsed_sec
         self.stdout = stdout
