@@ -123,7 +123,7 @@ class TestSuite(object):
         if self.package:
             test_suite_attributes['package'] = decode(self.package, encoding)
         if self.timestamp:
-            test_suite_attributes['timestamp'] = unicode(self.timestamp)
+            test_suite_attributes['timestamp'] = u(str(self.timestamp))
 
         xml_element = ET.Element("testsuite", test_suite_attributes)
 
