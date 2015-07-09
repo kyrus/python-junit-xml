@@ -6,7 +6,7 @@ import re
 import xml.etree.ElementTree as ET
 import xml.dom.minidom
 
-from six import u, iteritems
+from six import u, iteritems, PY2
 
 try:
     # Python 2
@@ -58,16 +58,18 @@ def decode(var, encoding):
     '''
     If not already unicode, decode it.
     '''
-
-    if isinstance(var, unicode):
-        ret = var
-    elif isinstance(var, str):
-        if encoding:
-            ret = var.decode(encoding)
+    if PY2:
+        if isinstance(var, unicode):
+            ret = var
+        elif isinstance(var, str):
+            if encoding:
+                ret = var.decode(encoding)
+            else:
+                ret = unicode(var)
         else:
             ret = unicode(var)
     else:
-        ret = unicode(var)
+        ret = var
     return ret
 
 
