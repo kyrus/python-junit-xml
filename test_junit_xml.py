@@ -7,7 +7,7 @@ import textwrap
 from xml.dom import minidom
 import codecs
 
-from six import u
+from six import u, PY2
 
 from junit_xml import (TestCase, TestSuite)
 
@@ -31,7 +31,8 @@ def serialize_and_read(test_suites, to_file=False, prettyprint=False, encoding=N
     else:
         xml_string = TestSuite.to_xml_string(
             test_suites, prettyprint=prettyprint, encoding=encoding)
-        assert isinstance(xml_string, unicode)
+        if PY2:
+            assert isinstance(xml_string, unicode)
         print("Serialized XML to string:\n%s" % xml_string)
         if encoding:
             xml_string = xml_string.encode(encoding)
@@ -248,7 +249,8 @@ class TestSuiteTests(unittest.TestCase):
         test_suites = [TestSuite('suite1', [TestCase('Test1')]),
                        TestSuite('suite2', [TestCase('Test2')])]
         xml_string = TestSuite.to_xml_string(test_suites)
-        self.assertTrue(isinstance(xml_string, unicode))
+        if PY2:
+            self.assertTrue(isinstance(xml_string, unicode))
         expected_xml_string = textwrap.dedent("""
             <?xml version="1.0" ?>
             <testsuites errors="0" failures="0" skipped="0" tests="2" time="0.0">
