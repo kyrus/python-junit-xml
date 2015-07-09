@@ -94,36 +94,6 @@ class TestSuiteTests(unittest.TestCase):
             ts.childNodes[0].childNodes[0].attributes['value'].value,
             'bar')
 
-    def test_single_suite_no_test_cases_utf8_encoded(self):
-        properties = {'foo': 'bar'}
-        package = u('mypäckage').encode('utf-8')
-        timestamp = 1398382805
-
-        (ts, tcs) = serialize_and_read(
-            TestSuite(
-                u('testä').encode('utf-8'),
-                [],
-                hostname='localhost',
-                id=1,
-                properties=properties,
-                package=package,
-                timestamp=timestamp
-            ),
-            to_file=True,
-            encoding='utf-8',
-            prettyprint=True
-        )[0]
-        self.assertEqual(ts.tagName, 'testsuite')
-        self.assertEqual(ts.attributes['package'].value.encode('utf-8'), package)
-        self.assertEqual(ts.attributes['timestamp'].value, str(timestamp))
-        self.assertEqual(
-            ts.childNodes[0].childNodes[0].attributes['name'].value,
-            'foo')
-        self.assertEqual(
-            ts.childNodes[0].childNodes[0].attributes['value'].value,
-            'bar')
-
-
     def test_single_suite_no_test_cases_utf8(self):
         properties = {'foö': 'bär'}
         package = 'mypäckage'
@@ -153,7 +123,6 @@ class TestSuiteTests(unittest.TestCase):
         self.assertEqual(
             ts.childNodes[0].childNodes[0].attributes['value'].value,
             decode('bär', 'utf-8'))
-
 
     def test_single_suite_no_test_cases_unicode(self):
         properties = {decode('foö', 'utf-8'): decode('bär', 'utf-8')}
