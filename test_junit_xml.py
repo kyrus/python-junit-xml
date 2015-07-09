@@ -95,12 +95,12 @@ class TestSuiteTests(unittest.TestCase):
 
     def test_single_suite_no_test_cases_utf8_encoded(self):
         properties = {'foo': 'bar'}
-        package = u'mypäckage'.encode('utf-8')
+        package = u('mypäckage').encode('utf-8')
         timestamp = 1398382805
 
         (ts, tcs) = serialize_and_read(
             TestSuite(
-                u'testä'.encode('utf-8'),
+                u('testä').encode('utf-8'),
                 [],
                 hostname='localhost',
                 id=1,
@@ -155,16 +155,16 @@ class TestSuiteTests(unittest.TestCase):
 
 
     def test_single_suite_no_test_cases_unicode(self):
-        properties = {u'foö': u'bär'}
-        package = u'mypäckage'
+        properties = {u('foö'): u('bär')}
+        package = u('mypäckage')
         timestamp = 1398382805
 
         (ts, tcs) = serialize_and_read(
             TestSuite(
-                u'äöü',
+                u('äöü'),
                 [],
-                hostname=u'löcalhost',
-                id=u'äöü',
+                hostname=u('löcalhost'),
+                id=u('äöü'),
                 properties=properties,
                 package=package,
                 timestamp=timestamp
@@ -178,10 +178,10 @@ class TestSuiteTests(unittest.TestCase):
         self.assertEqual(ts.attributes['timestamp'].value, str(timestamp))
         self.assertEqual(
             ts.childNodes[0].childNodes[0].attributes['name'].value,
-            u'foö')
+            u('foö'))
         self.assertEqual(
             ts.childNodes[0].childNodes[0].attributes['value'].value,
-            u'bär')
+            u('bär'))
 
     def test_single_suite_to_file(self):
         (ts, tcs) = serialize_and_read(
@@ -420,22 +420,31 @@ class TestCaseTests(unittest.TestCase):
         tc.add_error_info(message='Skipped error äöü', output="I skippäd with an error!")
         test_suite = TestSuite('Test UTF-8', [tc])
         (ts, tcs) = serialize_and_read(test_suite, encoding='utf-8')[0]
-        verify_test_case(self, tcs[0], {'name': u'Test äöü', 'classname': u'some.class.name.äöü', 'time': ("%f" % 123.345)},
-                         stdout=u'I am stdöüt!', stderr=u'I am stdärr!',
-                         skipped_message=u'Skipped äöü', skipped_output=u"I skippäd!",
-                         error_message=u'Skipped error äöü', error_output=u"I skippäd with an error!")
+        verify_test_case(self, tcs[0], {'name': u('Test äöü'),
+                                        'classname': u('some.class.name.äöü'),
+                                        'time': ("%f" % 123.345)},
+                        stdout=u('I am stdöüt!'), stderr=u('I am stdärr!'),
+                        skipped_message=u('Skipped äöü'),
+                        skipped_output=u("I skippäd!"),
+                        error_message=u('Skipped error äöü'),
+                        error_output=u("I skippäd with an error!"))
 
     def test_init_unicode(self):
-        tc = TestCase(u'Test äöü', u'some.class.name.äöü', 123.345, u'I am stdöüt!', u'I am stdärr!')
-        tc.add_skipped_info(message=u'Skipped äöü', output=u"I skippäd!")
-        tc.add_error_info(message=u'Skipped error äöü', output=u"I skippäd with an error!")
+        tc = TestCase(u('Test äöü'), u('some.class.name.äöü'), 123.345,
+                      u('I am stdöüt!'), u('I am stdärr!'))
+        tc.add_skipped_info(message=u('Skipped äöü'), output=u("I skippäd!"))
+        tc.add_error_info(message=u('Skipped error äöü'), output=u("I skippäd with an error!"))
 
         (ts, tcs) = serialize_and_read(TestSuite('Test Unicode',
                                                  [tc]))[0]
-        verify_test_case(self, tcs[0], {'name': u'Test äöü', 'classname': u'some.class.name.äöü', 'time': ("%f" % 123.345)},
-                         stdout=u'I am stdöüt!', stderr=u'I am stdärr!',
-                         skipped_message=u'Skipped äöü', skipped_output=u"I skippäd!",
-                         error_message=u'Skipped error äöü', error_output=u"I skippäd with an error!")
+        verify_test_case(self, tcs[0], {'name': u('Test äöü'),
+                                        'classname': u('some.class.name.äöü'),
+                                        'time': ("%f" % 123.345)},
+                        stdout=u('I am stdöüt!'), stderr=u('I am stdärr!'),
+                        skipped_message=u('Skipped äöü'),
+                        skipped_output=u("I skippäd!"),
+                        error_message=u('Skipped error äöü'),
+                        error_output=u("I skippäd with an error!"))
 
 
 def verify_test_case(tc, test_case_element, expected_attributes,
