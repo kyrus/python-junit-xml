@@ -69,7 +69,7 @@ def decode(var, encoding):
         else:
             ret = unicode(var)
     else:
-        ret = var
+        ret = str(var)
     return ret
 
 
@@ -123,7 +123,7 @@ class TestSuite(object):
         if self.package:
             test_suite_attributes['package'] = decode(self.package, encoding)
         if self.timestamp:
-            test_suite_attributes['timestamp'] = u(str(self.timestamp))
+            test_suite_attributes['timestamp'] = decode(self.timestamp, encoding)
 
         xml_element = ET.Element("testsuite", test_suite_attributes)
 

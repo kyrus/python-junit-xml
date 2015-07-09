@@ -145,14 +145,14 @@ class TestSuiteTests(unittest.TestCase):
             encoding='utf-8'
         )[0]
         self.assertEqual(ts.tagName, 'testsuite')
-        self.assertEqual(ts.attributes['package'].value.encode('utf-8'), package)
+        self.assertEqual(ts.attributes['package'].value, decode(package, 'utf-8'))
         self.assertEqual(ts.attributes['timestamp'].value, str(timestamp))
         self.assertEqual(
-            ts.childNodes[0].childNodes[0].attributes['name'].value.encode('utf-8'),
-            'foö')
+            ts.childNodes[0].childNodes[0].attributes['name'].value,
+            decode('foö', 'utf-8'))
         self.assertEqual(
-            ts.childNodes[0].childNodes[0].attributes['value'].value.encode('utf-8'),
-            'bär')
+            ts.childNodes[0].childNodes[0].attributes['value'].value,
+            decode('bär', 'utf-8'))
 
 
     def test_single_suite_no_test_cases_unicode(self):
@@ -427,17 +427,17 @@ class TestCaseTests(unittest.TestCase):
                                         'time': ("%f" % 123.345)},
                         stdout=decode('I am stdöüt!', 'utf-8'), stderr=decode('I am stdärr!', 'utf-8'),
                         skipped_message=decode('Skipped äöü', 'utf-8'),
-                        skipped_output="I skippäd!".decode('utf-8'),
+                        skipped_output=decode('I skippäd!', 'utf-8'),
                         error_message=decode('Skipped error äöü', 'utf-8'),
-                        error_output="I skippäd with an error!".decode('utf-8'))
+                        error_output=decode('I skippäd with an error!', 'utf-8'))
 
     def test_init_unicode(self):
         tc = TestCase(decode('Test äöü', 'utf-8'), decode('some.class.name.äöü', 'utf-8'), 123.345,
                       decode('I am stdöüt!', 'utf-8'), decode('I am stdärr!', 'utf-8'))
         tc.add_skipped_info(message=decode('Skipped äöü', 'utf-8'),
-                            output="I skippäd!".decode('utf-8'))
+                            output=decode('I skippäd!', 'utf-8'))
         tc.add_error_info(message=decode('Skipped error äöü', 'utf-8'),
-                          output="I skippäd with an error!".decode('utf-8'))
+                          output=decode('I skippäd with an error!', 'utf-8'))
 
         (ts, tcs) = serialize_and_read(TestSuite('Test Unicode',
                                                  [tc]))[0]
@@ -446,9 +446,9 @@ class TestCaseTests(unittest.TestCase):
                                         'time': ("%f" % 123.345)},
                         stdout=decode('I am stdöüt!', 'utf-8'), stderr=decode('I am stdärr!', 'utf-8'),
                         skipped_message=decode('Skipped äöü', 'utf-8'),
-                        skipped_output="I skippäd!".decode('utf-8'),
+                        skipped_output=decode('I skippäd!', 'utf-8'),
                         error_message=decode('Skipped error äöü', 'utf-8'),
-                        error_output="I skippäd with an error!".decode('utf-8'))
+                        error_output=decode('I skippäd with an error!', 'utf-8'))
 
 
 def verify_test_case(tc, test_case_element, expected_attributes,
