@@ -1,18 +1,18 @@
+# -*- coding: UTF-8 -*-
 from __future__ import with_statement
 import unittest
 import os
 import tempfile
 import textwrap
 from xml.dom import minidom
+import codecs
 
-from six import u
+from six import u, PY2
 
-from junit_xml import (TestCase, TestSuite)
-
-"""Unit tests"""
+from junit_xml import TestCase, TestSuite, decode
 
 
-def serialize_and_read(test_suites, to_file=False, prettyprint=None):
+def serialize_and_read(test_suites, to_file=False, prettyprint=False, encoding=None):
     """writes the test suite to an XML string and then re-reads it using minidom,
        returning => (test suite element, list of test case elements)"""
     try:
@@ -22,20 +22,31 @@ def serialize_and_read(test_suites, to_file=False, prettyprint=None):
 
     if to_file:
         fd, filename = tempfile.mkstemp(text=True)
-        with os.fdopen(fd, 'w') as f:
-            TestSuite.to_file(f, test_suites)
-
+        os.close(fd)
+        with codecs.open(filename, mode='w', encoding=encoding) as f:
+            TestSuite.to_file(f, test_suites, prettyprint=prettyprint, encoding=encoding)
         print("Serialized XML to temp file [%s]" % filename)
         xmldoc = minidom.parse(filename)
         os.remove(filename)
     else:
-        if prettyprint is not None:
-            xml_string = TestSuite.to_xml_string(
-                test_suites, prettyprint=prettyprint)
-        else:
-            xml_string = TestSuite.to_xml_string(test_suites)
+        xml_string = TestSuite.to_xml_string(
+            test_suites, prettyprint=prettyprint, encoding=encoding)
+        if PY2:
+            assert isinstance(xml_string, unicode)
         print("Serialized XML to string:\n%s" % xml_string)
+        if encoding:
+            xml_string = xml_string.encode(encoding)
         xmldoc = minidom.parseString(xml_string)
+
+    def remove_blanks(node):
+        for x in node.childNodes:
+            if x.nodeType == minidom.Node.TEXT_NODE:
+                if x.nodeValue:
+                    x.nodeValue = x.nodeValue.strip()
+            elif x.nodeType == minidom.Node.ELEMENT_NODE:
+                remove_blanks(x)
+    remove_blanks(xmldoc)
+    xmldoc.normalize()
 
     ret = []
     suites = xmldoc.getElementsByTagName("testsuites")[0]
@@ -70,17 +81,77 @@ class TestSuiteTests(unittest.TestCase):
                 package=package,
                 timestamp=timestamp
             ),
-            to_file=True
+            to_file=True,
+            prettyprint=True
         )[0]
         self.assertEqual(ts.tagName, 'testsuite')
         self.assertEqual(ts.attributes['package'].value, package)
         self.assertEqual(ts.attributes['timestamp'].value, str(timestamp))
         self.assertEqual(
-            ts.childNodes[1].childNodes[1].attributes['name'].value,
+            ts.childNodes[0].childNodes[0].attributes['name'].value,
             'foo')
         self.assertEqual(
-            ts.childNodes[1].childNodes[1].attributes['value'].value,
+            ts.childNodes[0].childNodes[0].attributes['value'].value,
             'bar')
+
+    def test_single_suite_no_test_cases_utf8(self):
+        properties = {'foö': 'bär'}
+        package = 'mypäckage'
+        timestamp = 1398382805
+
+        test_suite = TestSuite(
+                'äöü',
+                [],
+                hostname='löcalhost',
+                id='äöü',
+                properties=properties,
+                package=package,
+                timestamp=timestamp
+            )
+        (ts, tcs) = serialize_and_read(
+            test_suite,
+            to_file=True,
+            prettyprint=True,
+            encoding='utf-8'
+        )[0]
+        self.assertEqual(ts.tagName, 'testsuite')
+        self.assertEqual(ts.attributes['package'].value, decode(package, 'utf-8'))
+        self.assertEqual(ts.attributes['timestamp'].value, str(timestamp))
+        self.assertEqual(
+            ts.childNodes[0].childNodes[0].attributes['name'].value,
+            decode('foö', 'utf-8'))
+        self.assertEqual(
+            ts.childNodes[0].childNodes[0].attributes['value'].value,
+            decode('bär', 'utf-8'))
+
+    def test_single_suite_no_test_cases_unicode(self):
+        properties = {decode('foö', 'utf-8'): decode('bär', 'utf-8')}
+        package = decode('mypäckage', 'utf-8')
+        timestamp = 1398382805
+
+        (ts, tcs) = serialize_and_read(
+            TestSuite(
+                decode('äöü', 'utf-8'),
+                [],
+                hostname=decode('löcalhost', 'utf-8'),
+                id=decode('äöü', 'utf-8'),
+                properties=properties,
+                package=package,
+                timestamp=timestamp
+            ),
+            to_file=True,
+            prettyprint=True,
+            encoding='utf-8'
+        )[0]
+        self.assertEqual(ts.tagName, 'testsuite')
+        self.assertEqual(ts.attributes['package'].value, package)
+        self.assertEqual(ts.attributes['timestamp'].value, str(timestamp))
+        self.assertEqual(
+            ts.childNodes[0].childNodes[0].attributes['name'].value,
+            decode('foö', 'utf-8'))
+        self.assertEqual(
+            ts.childNodes[0].childNodes[0].attributes['value'].value,
+            decode('bär', 'utf-8'))
 
     def test_single_suite_to_file(self):
         (ts, tcs) = serialize_and_read(
@@ -141,12 +212,14 @@ class TestSuiteTests(unittest.TestCase):
         # testcase
         self.assertEqual('0', suites[1][0].attributes['time'].value)
 
-        # TODO: add more tests for the other attributes and properties
+        # @todo: add more tests for the other attributes and properties
 
     def test_to_xml_string(self):
         test_suites = [TestSuite('suite1', [TestCase('Test1')]),
                        TestSuite('suite2', [TestCase('Test2')])]
         xml_string = TestSuite.to_xml_string(test_suites)
+        if PY2:
+            self.assertTrue(isinstance(xml_string, unicode))
         expected_xml_string = textwrap.dedent("""
             <?xml version="1.0" ?>
             <testsuites errors="0" failures="0" skipped="0" tests="2" time="0.0">
@@ -311,6 +384,40 @@ class TestCaseTests(unittest.TestCase):
         verify_test_case(
             self, tcs[0], {'name': 'Failure-Message'}, failure_message=u(
                 "failure message with illegal unicode char: []"))
+
+    def test_init_utf8(self):
+        tc = TestCase('Test äöü', 'some.class.name.äöü', 123.345, 'I am stdöüt!', 'I am stdärr!')
+        tc.add_skipped_info(message='Skipped äöü', output="I skippäd!")
+        tc.add_error_info(message='Skipped error äöü', output="I skippäd with an error!")
+        test_suite = TestSuite('Test UTF-8', [tc])
+        (ts, tcs) = serialize_and_read(test_suite, encoding='utf-8')[0]
+        verify_test_case(self, tcs[0], {'name': decode('Test äöü', 'utf-8'),
+                                        'classname': decode('some.class.name.äöü', 'utf-8'),
+                                        'time': ("%f" % 123.345)},
+                        stdout=decode('I am stdöüt!', 'utf-8'), stderr=decode('I am stdärr!', 'utf-8'),
+                        skipped_message=decode('Skipped äöü', 'utf-8'),
+                        skipped_output=decode('I skippäd!', 'utf-8'),
+                        error_message=decode('Skipped error äöü', 'utf-8'),
+                        error_output=decode('I skippäd with an error!', 'utf-8'))
+
+    def test_init_unicode(self):
+        tc = TestCase(decode('Test äöü', 'utf-8'), decode('some.class.name.äöü', 'utf-8'), 123.345,
+                      decode('I am stdöüt!', 'utf-8'), decode('I am stdärr!', 'utf-8'))
+        tc.add_skipped_info(message=decode('Skipped äöü', 'utf-8'),
+                            output=decode('I skippäd!', 'utf-8'))
+        tc.add_error_info(message=decode('Skipped error äöü', 'utf-8'),
+                          output=decode('I skippäd with an error!', 'utf-8'))
+
+        (ts, tcs) = serialize_and_read(TestSuite('Test Unicode',
+                                                 [tc]))[0]
+        verify_test_case(self, tcs[0], {'name': decode('Test äöü', 'utf-8'),
+                                        'classname': decode('some.class.name.äöü', 'utf-8'),
+                                        'time': ("%f" % 123.345)},
+                        stdout=decode('I am stdöüt!', 'utf-8'), stderr=decode('I am stdärr!', 'utf-8'),
+                        skipped_message=decode('Skipped äöü', 'utf-8'),
+                        skipped_output=decode('I skippäd!', 'utf-8'),
+                        error_message=decode('Skipped error äöü', 'utf-8'),
+                        error_output=decode('I skippäd with an error!', 'utf-8'))
 
 
 def verify_test_case(tc, test_case_element, expected_attributes,
