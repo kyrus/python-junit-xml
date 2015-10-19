@@ -55,9 +55,9 @@ Based on the understanding of what Jenkins can parse for JUnit XML files.
 
 
 def decode(var, encoding):
-    '''
+    """
     If not already unicode, decode it.
-    '''
+    """
     if PY2:
         if isinstance(var, unicode):
             ret = var
@@ -74,9 +74,10 @@ def decode(var, encoding):
 
 
 class TestSuite(object):
-    '''Suite of test cases.
+    """
+    Suite of test cases.
     Can handle unicode strings or binary strings if their encoding is provided.
-    '''
+    """
 
     def __init__(self, name, test_cases=None, hostname=None, id=None,
                  package=None, timestamp=None, properties=None):
@@ -94,14 +95,13 @@ class TestSuite(object):
         self.timestamp = timestamp
         self.properties = properties
 
-
     def build_xml_doc(self, encoding=None):
-        '''
+        """
         Builds the XML document for the JUnit test suite.
         Produces clean unicode strings and decodes non-unicode with the help of encoding.
         @param encoding: Used to decode encoded strings.
         @return: XML document with unicode string elements
-        '''
+        """
 
         # build the test suite element
         test_suite_attributes = dict()
@@ -192,10 +192,11 @@ class TestSuite(object):
 
     @staticmethod
     def to_xml_string(test_suites, prettyprint=True, encoding=None):
-        '''Returns the string representation of the JUnit XML document.
+        """
+        Returns the string representation of the JUnit XML document.
         @param encoding: The encoding of the input.
         @return: unicode string
-        '''
+        """
 
         try:
             iter(test_suites)
@@ -233,22 +234,21 @@ class TestSuite(object):
 
     @staticmethod
     def to_file(file_descriptor, test_suites, prettyprint=True, encoding=None):
-        '''
+        """
         Writes the JUnit XML document to a file.
-        '''
+        """
         xml_string = TestSuite.to_xml_string(
             test_suites, prettyprint=prettyprint, encoding=encoding)
         # has problems with encoded str with non-ASCII (non-default-encoding) characters!
         file_descriptor.write(xml_string)
 
-
     @staticmethod
     def _clean_illegal_xml_chars(string_to_clean):
-        '''
+        """
         Removes any illegal unicode characters from the given XML string.
         
         @see: http://stackoverflow.com/questions/1707890/fast-way-to-filter-illegal-xml-unicode-chars-in-python
-        '''
+        """
 
         illegal_unichrs = [
             (0x00, 0x08), (0x0B, 0x1F), (0x7F, 0x84), (0x86, 0x9F),
