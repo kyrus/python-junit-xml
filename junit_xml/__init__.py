@@ -206,7 +206,7 @@ class TestSuite(object):
         attributes = defaultdict(int)
         for ts in test_suites:
             ts_xml = ts.build_xml_doc(encoding=encoding)
-            for key in ['failures', 'errors', 'skipped', 'tests']:
+            for key in ['failures', 'errors', 'tests']:
                 attributes[key] += int(ts_xml.get(key, 0))
             for key in ['time']:
                 attributes[key] += float(ts_xml.get(key, 0))
