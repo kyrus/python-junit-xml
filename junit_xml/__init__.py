@@ -246,7 +246,7 @@ class TestSuite(object):
     def _clean_illegal_xml_chars(string_to_clean):
         """
         Removes any illegal unicode characters from the given XML string.
-        
+
         @see: http://stackoverflow.com/questions/1707890/fast-way-to-filter-illegal-xml-unicode-chars-in-python
         """
 
@@ -284,6 +284,22 @@ class TestCase(object):
         self.failure_output = None
         self.skipped_message = None
         self.skipped_output = None
+
+    def add_elapsed_time_in_sec(self, elapsed_sec):
+        """Adds/Updates the test duration to the testcase, test time is in seconds only"""
+        self.elapsed_sec = elapsed_sec
+
+    def add_classname(self, classname):
+        """Adds/Updates a classname to the testcase"""
+        self.classname = classname
+
+    def add_stdout(self, stdout):
+        """Adds/Updates the stdout to the testcase"""
+        self.stdout = stdout
+
+    def add_stderr(self, stderr):
+        """Adds/Updates the stderr to the testcase"""
+        self.stderr = stderr
 
     def add_error_info(self, message=None, output=None):
         """Adds an error message, output, or both to the test case"""
