@@ -301,13 +301,27 @@ class TestCaseTests(unittest.TestCase):
             self, tcs[0], {'name': 'Failure-Output'},
             failure_output="I failed!")
 
+    def test_init_failure_type(self):
+        tc = TestCase('Failure-Type')
+        tc.add_failure_info(failure_type='com.example.Error')
+        (ts, tcs) = serialize_and_read(TestSuite('test', [tc]))[0]
+        verify_test_case(self, tcs[0], {'name': 'Failure-Type'})
+
+        tc.add_failure_info("failure message")
+        (ts, tcs) = serialize_and_read(TestSuite('test', [tc]))[0]
+        verify_test_case(
+            self, tcs[0], {'name': 'Failure-Type'},
+            failure_message="failure message",
+            failure_type='com.example.Error')
+
     def test_init_failure(self):
         tc = TestCase('Failure-Message-and-Output')
         tc.add_failure_info("failure message", "I failed!")
         (ts, tcs) = serialize_and_read(TestSuite('test', [tc]))[0]
         verify_test_case(
             self, tcs[0], {'name': 'Failure-Message-and-Output'},
-            failure_message="failure message", failure_output="I failed!")
+            failure_message="failure message", failure_output="I failed!",
+            failure_type='failure')
 
     def test_init_error_message(self):
         tc = TestCase('Error-Message')
@@ -437,6 +451,7 @@ class TestCaseTests(unittest.TestCase):
 def verify_test_case(tc, test_case_element, expected_attributes,
                      error_message=None, error_output=None, error_type=None,
                      failure_message=None, failure_output=None,
+                     failure_type=None,
                      skipped_message=None, skipped_output=None,
                      stdout=None, stderr=None):
     for k, v in expected_attributes.items():
@@ -481,6 +496,10 @@ def verify_test_case(tc, test_case_element, expected_attributes,
         if failure_message:
             tc.assertEqual(
                 failure_message, failures[0].attributes['message'].value)
+
+        if failure_type and failures:
+            tc.assertEqual(
+                failure_type, failures[0].attributes['type'].value)
 
         if failure_output:
             tc.assertEqual(
