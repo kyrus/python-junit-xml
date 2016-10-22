@@ -324,13 +324,27 @@ class TestCaseTests(unittest.TestCase):
         verify_test_case(
             self, tcs[0], {'name': 'Error-Output'}, error_output="I errored!")
 
+    def test_init_error_type(self):
+        tc = TestCase('Error-Type')
+        tc.add_error_info(error_type='com.example.Error')
+        (ts, tcs) = serialize_and_read(TestSuite('test', [tc]))[0]
+        verify_test_case(self, tcs[0], {'name': 'Error-Type'})
+
+        tc.add_error_info("error message")
+        (ts, tcs) = serialize_and_read(TestSuite('test', [tc]))[0]
+        verify_test_case(
+            self, tcs[0], {'name': 'Error-Type'},
+            error_message="error message",
+            error_type='com.example.Error')
+
     def test_init_error(self):
         tc = TestCase('Error-Message-and-Output')
         tc.add_error_info("error message", "I errored!")
         (ts, tcs) = serialize_and_read(TestSuite('test', [tc]))[0]
         verify_test_case(
             self, tcs[0], {'name': 'Error-Message-and-Output'},
-            error_message="error message", error_output="I errored!")
+            error_message="error message", error_output="I errored!",
+            error_type="error")
 
     def test_init_skipped_message(self):
         tc = TestCase('Skipped-Message')
@@ -421,7 +435,7 @@ class TestCaseTests(unittest.TestCase):
 
 
 def verify_test_case(tc, test_case_element, expected_attributes,
-                     error_message=None, error_output=None,
+                     error_message=None, error_output=None, error_type=None,
                      failure_message=None, failure_output=None,
                      skipped_message=None, skipped_output=None,
                      stdout=None, stderr=None):
@@ -449,6 +463,10 @@ def verify_test_case(tc, test_case_element, expected_attributes,
         if error_message:
             tc.assertEqual(
                 error_message, errors[0].attributes['message'].value)
+
+        if error_type and errors:
+            tc.assertEqual(
+                error_type, errors[0].attributes['type'].value)
 
         if error_output:
             tc.assertEqual(
