@@ -251,23 +251,35 @@ class TestCaseTests(unittest.TestCase):
 
     def test_init_classname(self):
         (ts, tcs) = serialize_and_read(
-            TestSuite('test', [TestCase('Test1', 'some.class.name')]))[0]
+            TestSuite('test',
+                      [TestCase(name='Test1', classname='some.class.name')]))[0]
         verify_test_case(
             self, tcs[0], {'name': 'Test1', 'classname': 'some.class.name'})
 
     def test_init_classname_time(self):
         (ts, tcs) = serialize_and_read(
             TestSuite('test',
-                      [TestCase('Test1', 'some.class.name', 123.345)]))[0]
+                      [TestCase(name='Test1', classname='some.class.name',
+                                elapsed_sec=123.345)]))[0]
         verify_test_case(
             self, tcs[0], {'name': 'Test1', 'classname': 'some.class.name',
                            'time': ("%f" % 123.345)})
 
+    def test_init_classname_time_timestamp(self):
+        (ts, tcs) = serialize_and_read(
+            TestSuite('test',
+                      [TestCase(name='Test1', classname='some.class.name',
+                                elapsed_sec=123.345, timestamp=99999)]))[0]
+        verify_test_case(
+            self, tcs[0], {'name': 'Test1', 'classname': 'some.class.name',
+                           'time': ("%f" % 123.345),
+                           'timestamp': ("%s" % 99999)})
+
     def test_init_stderr(self):
         (ts, tcs) = serialize_and_read(
             TestSuite(
-                'test', [TestCase('Test1', 'some.class.name', 123.345,
-                                  stderr='I am stderr!')]))[0]
+                'test', [TestCase(name='Test1', classname='some.class.name',
+                            elapsed_sec=123.345, stderr='I am stderr!')]))[0]
         verify_test_case(
             self, tcs[0],
             {'name': 'Test1', 'classname': 'some.class.name',
@@ -277,8 +289,9 @@ class TestCaseTests(unittest.TestCase):
         (ts, tcs) = serialize_and_read(
             TestSuite(
                 'test', [TestCase(
-                    'Test1', 'some.class.name', 123.345, 'I am stdout!',
-                    'I am stderr!')]))[0]
+                    name='Test1', classname='some.class.name',
+                    elapsed_sec=123.345, stdout='I am stdout!',
+                    stderr='I am stderr!')]))[0]
         verify_test_case(
             self, tcs[0],
             {'name': 'Test1', 'classname': 'some.class.name',
@@ -414,9 +427,12 @@ class TestCaseTests(unittest.TestCase):
                 "failure message with illegal unicode char: []"))
 
     def test_init_utf8(self):
-        tc = TestCase('Test äöü', 'some.class.name.äöü', 123.345, 'I am stdöüt!', 'I am stdärr!')
+        tc = TestCase(name='Test äöü', classname='some.class.name.äöü',
+                      elapsed_sec=123.345, stdout='I am stdöüt!',
+                      stderr='I am stdärr!')
         tc.add_skipped_info(message='Skipped äöü', output="I skippäd!")
-        tc.add_error_info(message='Skipped error äöü', output="I skippäd with an error!")
+        tc.add_error_info(message='Skipped error äöü',
+                          output="I skippäd with an error!")
         test_suite = TestSuite('Test UTF-8', [tc])
         (ts, tcs) = serialize_and_read(test_suite, encoding='utf-8')[0]
         verify_test_case(self, tcs[0], {'name': decode('Test äöü', 'utf-8'),
@@ -429,8 +445,11 @@ class TestCaseTests(unittest.TestCase):
                         error_output=decode('I skippäd with an error!', 'utf-8'))
 
     def test_init_unicode(self):
-        tc = TestCase(decode('Test äöü', 'utf-8'), decode('some.class.name.äöü', 'utf-8'), 123.345,
-                      decode('I am stdöüt!', 'utf-8'), decode('I am stdärr!', 'utf-8'))
+        tc = TestCase(name=decode('Test äöü', 'utf-8'),
+                      classname=decode('some.class.name.äöü', 'utf-8'),
+                      elapsed_sec=123.345,
+                      stdout=decode('I am stdöüt!', 'utf-8'),
+                      stderr=decode('I am stdärr!', 'utf-8'))
         tc.add_skipped_info(message=decode('Skipped äöü', 'utf-8'),
                             output=decode('I skippäd!', 'utf-8'))
         tc.add_error_info(message=decode('Skipped error äöü', 'utf-8'),
@@ -441,11 +460,12 @@ class TestCaseTests(unittest.TestCase):
         verify_test_case(self, tcs[0], {'name': decode('Test äöü', 'utf-8'),
                                         'classname': decode('some.class.name.äöü', 'utf-8'),
                                         'time': ("%f" % 123.345)},
-                        stdout=decode('I am stdöüt!', 'utf-8'), stderr=decode('I am stdärr!', 'utf-8'),
-                        skipped_message=decode('Skipped äöü', 'utf-8'),
-                        skipped_output=decode('I skippäd!', 'utf-8'),
-                        error_message=decode('Skipped error äöü', 'utf-8'),
-                        error_output=decode('I skippäd with an error!', 'utf-8'))
+                         stdout=decode('I am stdöüt!', 'utf-8'),
+                         stderr=decode('I am stdärr!', 'utf-8'),
+                         skipped_message=decode('Skipped äöü', 'utf-8'),
+                         skipped_output=decode('I skippäd!', 'utf-8'),
+                         error_message=decode('Skipped error äöü', 'utf-8'),
+                         error_output=decode('I skippäd with an error!', 'utf-8'))
 
 
 def verify_test_case(tc, test_case_element, expected_attributes,

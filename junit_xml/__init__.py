@@ -138,10 +138,26 @@ class TestSuite(object):
         for case in self.test_cases:
             test_case_attributes = dict()
             test_case_attributes['name'] = decode(case.name, encoding)
+            if case.assertions:
+                test_case_attributes['assertions'] = decode(case.assertions, encoding)
             if case.elapsed_sec:
                 test_case_attributes['time'] = "%f" % case.elapsed_sec
+            if case.timestamp:
+                test_case_attributes['timestamp'] = decode(case.timestamp, encoding)
             if case.classname:
                 test_case_attributes['classname'] = decode(case.classname, encoding)
+            if case.status:
+                test_case_attributes['status'] = decode(case.status, encoding)
+            if case.category:
+                test_case_attributes['class'] = decode(case.category, encoding)
+            if case.file:
+                test_case_attributes['file'] = decode(case.file, encoding)
+            if case.line:
+                test_case_attributes['line'] = decode(case.line, encoding)
+            if case.log:
+                test_case_attributes['log'] = decode(case.log, encoding)
+            if case.url:
+                test_case_attributes['url'] = decode(case.url, encoding)
 
             test_case_element = ET.SubElement(
                 xml_element, "testcase", test_case_attributes)
@@ -250,7 +266,7 @@ class TestSuite(object):
     def _clean_illegal_xml_chars(string_to_clean):
         """
         Removes any illegal unicode characters from the given XML string.
-        
+
         @see: http://stackoverflow.com/questions/1707890/fast-way-to-filter-illegal-xml-unicode-chars-in-python
         """
 
@@ -275,13 +291,23 @@ class TestSuite(object):
 class TestCase(object):
     """A JUnit test case with a result and possibly some stdout or stderr"""
 
-    def __init__(self, name, classname=None, elapsed_sec=None, stdout=None,
-                 stderr=None):
+    def __init__(self, name, assertions=None, elapsed_sec=None,
+            timestamp=None, classname=None, status=None, category=None, file=None, line=None,
+            log=None, group=None, url=None, stdout=None, stderr=None):
         self.name = name
+        self.assertions = assertions
         self.elapsed_sec = elapsed_sec
+        self.timestamp = timestamp
+        self.classname = classname
+        self.status = status
+        self.category = category
+        self.file = file
+        self.line = line
+        self.log = log
+        self.url = url
         self.stdout = stdout
         self.stderr = stderr
-        self.classname = classname
+
         self.error_message = None
         self.error_output = None
         self.error_type = None
