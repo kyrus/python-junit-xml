@@ -79,9 +79,9 @@ class TestSuite(object):
     Can handle unicode strings or binary strings if their encoding is provided.
     """
 
-    def __init__(self, name, test_cases=None, timestamp=None, hostname=None,
-                 id=None, package=None, file=None, log=None, url=None,
-                 stdout=None, stderr=None, properties=None):
+    def __init__(self, name, test_cases=None, hostname=None, id=None,
+                 package=None, timestamp=None, properties=None, file=None,
+                 log=None, url=None, stdout=None, stderr=None):
         self.name = name
         if not test_cases:
             test_cases = []
@@ -318,10 +318,10 @@ class TestSuite(object):
 class TestCase(object):
     """A JUnit test case with a result and possibly some stdout or stderr"""
 
-    def __init__(self, name, assertions=None, elapsed_sec=None,
-            timestamp=None, classname=None, status=None, category=None,
-            file=None, line=None, log=None, group=None, url=None, stdout=None,
-            stderr=None):
+    def __init__(self, name, classname=None, elapsed_sec=None, stdout=None,
+                 stderr=None, assertions=None, timestamp=None, status=None,
+                 category=None, file=None, line=None, log=None, group=None,
+                 url=None):
         self.name = name
         self.assertions = assertions
         self.elapsed_sec = elapsed_sec
