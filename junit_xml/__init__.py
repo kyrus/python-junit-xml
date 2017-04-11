@@ -80,7 +80,8 @@ class TestSuite(object):
     """
 
     def __init__(self, name, test_cases=None, hostname=None, id=None,
-                 package=None, timestamp=None, properties=None):
+                 package=None, timestamp=None, properties=None, file=None,
+                 log=None, url=None, stdout=None, stderr=None):
         self.name = name
         if not test_cases:
             test_cases = []
@@ -89,10 +90,15 @@ class TestSuite(object):
         except TypeError:
             raise Exception('test_cases must be a list of test cases')
         self.test_cases = test_cases
+        self.timestamp = timestamp
         self.hostname = hostname
         self.id = id
         self.package = package
-        self.timestamp = timestamp
+        self.file = file
+        self.log = log
+        self.url = url
+        self.stdout = stdout
+        self.stderr = stderr
         self.properties = properties
 
     def build_xml_doc(self, encoding=None):
@@ -106,6 +112,11 @@ class TestSuite(object):
         # build the test suite element
         test_suite_attributes = dict()
         test_suite_attributes['name'] = decode(self.name, encoding)
+        if any(c.assertions for c in self.test_cases):
+            test_suite_attributes['assertions'] = \
+                str(sum([int(c.assertions) for c in self.test_cases if c.assertions]))
+        test_suite_attributes['disabled'] = \
+            str(len([c for c in self.test_cases if not c.is_enabled]))
         test_suite_attributes['failures'] = \
             str(len([c for c in self.test_cases if c.is_failure()]))
         test_suite_attributes['errors'] = \
@@ -124,6 +135,12 @@ class TestSuite(object):
             test_suite_attributes['package'] = decode(self.package, encoding)
         if self.timestamp:
             test_suite_attributes['timestamp'] = decode(self.timestamp, encoding)
+        if self.timestamp:
+            test_suite_attributes['file'] = decode(self.file, encoding)
+        if self.timestamp:
+            test_suite_attributes['log'] = decode(self.log, encoding)
+        if self.timestamp:
+            test_suite_attributes['url'] = decode(self.url, encoding)
 
         xml_element = ET.Element("testsuite", test_suite_attributes)
 
@@ -134,12 +151,23 @@ class TestSuite(object):
                 attrs = {'name': decode(k, encoding), 'value': decode(v, encoding)}
                 ET.SubElement(props_element, "property", attrs)
 
+        # add test suite stdout
+        if self.stdout:
+            stdout_element = ET.SubElement(xml_element, "system-out")
+            stdout_element.text = decode(self.stdout, encoding)
+
+        # add test suite stderr
+        if self.stderr:
+            stderr_element = ET.SubElement(xml_element, "system-err")
+            stderr_element.text = decode(self.stderr, encoding)
+
         # test cases
         for case in self.test_cases:
             test_case_attributes = dict()
             test_case_attributes['name'] = decode(case.name, encoding)
             if case.assertions:
-                test_case_attributes['assertions'] = decode(case.assertions, encoding)
+                # Number of assertions in the test case
+                test_case_attributes['assertions'] = "%d" % case.assertions
             if case.elapsed_sec:
                 test_case_attributes['time'] = "%f" % case.elapsed_sec
             if case.timestamp:
@@ -227,7 +255,7 @@ class TestSuite(object):
         attributes = defaultdict(int)
         for ts in test_suites:
             ts_xml = ts.build_xml_doc(encoding=encoding)
-            for key in ['failures', 'errors', 'tests']:
+            for key in ['failures', 'errors', 'tests', 'disabled']:
                 attributes[key] += int(ts_xml.get(key, 0))
             for key in ['time']:
                 attributes[key] += float(ts_xml.get(key, 0))
@@ -291,9 +319,10 @@ class TestSuite(object):
 class TestCase(object):
     """A JUnit test case with a result and possibly some stdout or stderr"""
 
-    def __init__(self, name, assertions=None, elapsed_sec=None,
-            timestamp=None, classname=None, status=None, category=None, file=None, line=None,
-            log=None, group=None, url=None, stdout=None, stderr=None):
+    def __init__(self, name, classname=None, elapsed_sec=None, stdout=None,
+                 stderr=None, assertions=None, timestamp=None, status=None,
+                 category=None, file=None, line=None, log=None, group=None,
+                 url=None):
         self.name = name
         self.assertions = assertions
         self.elapsed_sec = elapsed_sec
@@ -308,6 +337,7 @@ class TestCase(object):
         self.stdout = stdout
         self.stderr = stderr
 
+        self.is_enabled = True
         self.error_message = None
         self.error_output = None
         self.error_type = None

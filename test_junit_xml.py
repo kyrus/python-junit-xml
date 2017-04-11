@@ -73,8 +73,8 @@ class TestSuiteTests(unittest.TestCase):
 
         (ts, tcs) = serialize_and_read(
             TestSuite(
-                'test',
-                [],
+                name='test',
+                test_cases=[],
                 hostname='localhost',
                 id=1,
                 properties=properties,
@@ -100,8 +100,8 @@ class TestSuiteTests(unittest.TestCase):
         timestamp = 1398382805
 
         test_suite = TestSuite(
-                'äöü',
-                [],
+                name='äöü',
+                test_cases=[],
                 hostname='löcalhost',
                 id='äöü',
                 properties=properties,
@@ -131,8 +131,8 @@ class TestSuiteTests(unittest.TestCase):
 
         (ts, tcs) = serialize_and_read(
             TestSuite(
-                decode('äöü', 'utf-8'),
-                [],
+                name=decode('äöü', 'utf-8'),
+                test_cases=[],
                 hostname=decode('löcalhost', 'utf-8'),
                 id=decode('äöü', 'utf-8'),
                 properties=properties,
@@ -198,9 +198,8 @@ class TestSuiteTests(unittest.TestCase):
         verify_test_case(self, suites[1][1][0], {'name': 'Test2'})
 
     def test_attribute_time(self):
-        tss = [TestSuite('suite1',
-               [TestCase('Test1', 'some.class.name', 123.345),
-                TestCase('Test2', 'some2.class.name', 123.345)]),
+        tss = [TestSuite('suite1', [TestCase(name='Test1', classname='some.class.name', elapsed_sec=123.345),
+                                    TestCase(name='Test2', classname='some2.class.name', elapsed_sec=123.345)]),
                TestSuite('suite2', [TestCase('Test2')])]
         suites = serialize_and_read(tss)
 
@@ -212,21 +211,60 @@ class TestSuiteTests(unittest.TestCase):
         # testcase
         self.assertEqual('0', suites[1][0].attributes['time'].value)
 
+    def test_attribute_disable(self):
+        tc = TestCase('Disabled-Test')
+        tc.is_enabled = False
+        tss = [TestSuite('suite1', [tc])]
+        suites = serialize_and_read(tss)
+
+        self.assertEqual('1', suites[0][0].attributes['disabled'].value)
+
+    def test_stderr(self):
+        suites = serialize_and_read(
+            TestSuite(name='test', stderr='I am stderr!',
+                      test_cases=[TestCase(name='Test1')]))[0]
+        self.assertEqual('I am stderr!',
+                         suites[0].getElementsByTagName('system-err')[0].firstChild.data)
+
+    def test_stdout_stderr(self):
+        suites = serialize_and_read(
+            TestSuite(name='test', stdout='I am stdout!',
+                      stderr='I am stderr!',
+                      test_cases=[TestCase(name='Test1')]))[0]
+        self.assertEqual('I am stderr!',
+                         suites[0].getElementsByTagName('system-err')[0].firstChild.data)
+        self.assertEqual('I am stdout!',
+                         suites[0].getElementsByTagName('system-out')[0].firstChild.data)
+
+    def test_no_assertions(self):
+        suites = serialize_and_read(
+            TestSuite(name='test',
+                      test_cases=[TestCase(name='Test1')]))[0]
+        self.assertFalse(suites[0].getElementsByTagName('testcase')[0].hasAttribute('assertions'))
+
+    def test_assertions(self):
+        suites = serialize_and_read(
+            TestSuite(name='test',
+                      test_cases=[TestCase(name='Test1',
+                                           assertions=5)]))[0]
+        self.assertEquals('5',
+                          suites[0].getElementsByTagName('testcase')[0].attributes['assertions'].value)
+
         # @todo: add more tests for the other attributes and properties
 
     def test_to_xml_string(self):
-        test_suites = [TestSuite('suite1', [TestCase('Test1')]),
-                       TestSuite('suite2', [TestCase('Test2')])]
+        test_suites = [TestSuite(name='suite1', test_cases=[TestCase(name='Test1')]),
+                       TestSuite(name='suite2', test_cases=[TestCase(name='Test2')])]
         xml_string = TestSuite.to_xml_string(test_suites)
         if PY2:
             self.assertTrue(isinstance(xml_string, unicode))
         expected_xml_string = textwrap.dedent("""
             <?xml version="1.0" ?>
-            <testsuites errors="0" failures="0" tests="2" time="0.0">
-            \t<testsuite errors="0" failures="0" name="suite1" skipped="0" tests="1" time="0">
+            <testsuites disabled="0" errors="0" failures="0" tests="2" time="0.0">
+            \t<testsuite disabled="0" errors="0" failures="0" name="suite1" skipped="0" tests="1" time="0">
             \t\t<testcase name="Test1"/>
             \t</testsuite>
-            \t<testsuite errors="0" failures="0" name="suite2" skipped="0" tests="1" time="0">
+            \t<testsuite disabled="0" errors="0" failures="0" name="suite2" skipped="0" tests="1" time="0">
             \t\t<testcase name="Test2"/>
             \t</testsuite>
             </testsuites>
@@ -297,6 +335,12 @@ class TestCaseTests(unittest.TestCase):
             {'name': 'Test1', 'classname': 'some.class.name',
              'time': ("%f" % 123.345)},
             stdout='I am stdout!', stderr='I am stderr!')
+
+    def test_init_disable(self):
+        tc = TestCase('Disabled-Test')
+        tc.is_enabled = False
+        (ts, tcs) = serialize_and_read(TestSuite('test', [tc]))[0]
+        verify_test_case(self, tcs[0], {'name': 'Disabled-Test'})
 
     def test_init_failure_message(self):
         tc = TestCase('Failure-Message')
