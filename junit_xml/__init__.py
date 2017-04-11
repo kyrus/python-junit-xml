@@ -116,7 +116,7 @@ class TestSuite(object):
             test_suite_attributes['assertions'] = \
                 str(sum([int(c.assertions) for c in self.test_cases if c.assertions]))
         test_suite_attributes['disabled'] = \
-            str(len([c for c in self.test_cases if c.is_disabled()]))
+            str(len([c for c in self.test_cases if not c.is_enabled]))
         test_suite_attributes['failures'] = \
             str(len([c for c in self.test_cases if c.is_failure()]))
         test_suite_attributes['errors'] = \
@@ -166,6 +166,7 @@ class TestSuite(object):
             test_case_attributes = dict()
             test_case_attributes['name'] = decode(case.name, encoding)
             if case.assertions:
+                # Number of assertions in the test case
                 test_case_attributes['assertions'] = "%d" % case.assertions
             if case.elapsed_sec:
                 test_case_attributes['time'] = "%f" % case.elapsed_sec
@@ -336,7 +337,7 @@ class TestCase(object):
         self.stdout = stdout
         self.stderr = stderr
 
-        self.enable = True
+        self.is_enabled = True
         self.error_message = None
         self.error_output = None
         self.error_type = None
@@ -345,10 +346,6 @@ class TestCase(object):
         self.failure_type = None
         self.skipped_message = None
         self.skipped_output = None
-
-    def disable(self):
-        """Disable test case"""
-        self.enable = False
 
     def add_error_info(self, message=None, output=None, error_type=None):
         """Adds an error message, output, or both to the test case"""
@@ -374,10 +371,6 @@ class TestCase(object):
             self.skipped_message = message
         if output:
             self.skipped_output = output
-
-    def is_disabled(self):
-        """Returns true if this test case is disable"""
-        return not self.enable
 
     def is_failure(self):
         """returns true if this test case is a failure"""
