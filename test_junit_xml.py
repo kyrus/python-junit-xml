@@ -213,7 +213,7 @@ class TestSuiteTests(unittest.TestCase):
 
     def test_attribute_disable(self):
         tc = TestCase('Disabled-Test')
-        tc.is_enabled=False
+        tc.is_enabled = False
         tss = [TestSuite('suite1', [tc])]
         suites = serialize_and_read(tss)
 
@@ -338,7 +338,7 @@ class TestCaseTests(unittest.TestCase):
 
     def test_init_disable(self):
         tc = TestCase('Disabled-Test')
-        tc.is_enabled=False
+        tc.is_enabled = False
         (ts, tcs) = serialize_and_read(TestSuite('test', [tc]))[0]
         verify_test_case(self, tcs[0], {'name': 'Disabled-Test'})
 
