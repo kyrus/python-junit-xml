@@ -17,7 +17,7 @@ setup(
     description='Creates JUnit XML test result documents that can be read by '
                 'tools such as Jenkins',
     long_description=read('README.rst'),
-    version='1.7',
+    version='1.8',
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
