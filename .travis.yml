@@ -16,4 +16,4 @@ script:
 
 notifications:
   email:
-    - brian@kyr.us
+    - chad@hutchins.house

@@ -1,6 +1,6 @@
 python-junit-xml
 ================
-.. image:: https://travis-ci.org/kyrus/python-junit-xml.png?branch=master
+.. image:: https://travis-ci.org/chadhutchins182/python-junit-xml.svg?branch=master
 
 About
 -----
