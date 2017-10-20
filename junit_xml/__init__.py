@@ -135,11 +135,11 @@ class TestSuite(object):
             test_suite_attributes['package'] = decode(self.package, encoding)
         if self.timestamp:
             test_suite_attributes['timestamp'] = decode(self.timestamp, encoding)
-        if self.timestamp:
+        if self.file:
             test_suite_attributes['file'] = decode(self.file, encoding)
-        if self.timestamp:
+        if self.log:
             test_suite_attributes['log'] = decode(self.log, encoding)
-        if self.timestamp:
+        if self.url:
             test_suite_attributes['url'] = decode(self.url, encoding)
 
         xml_element = ET.Element("testsuite", test_suite_attributes)
