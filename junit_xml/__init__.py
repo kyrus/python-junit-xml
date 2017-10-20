@@ -347,6 +347,11 @@ class TestCase(object):
         self.skipped_message = None
         self.skipped_output = None
 
+    def add_stdout(self, stdout=None):
+        """Adds an error message, output, or both to the test case"""
+        if stdout:
+            self.stdout = stdout
+
     def add_error_info(self, message=None, output=None, error_type=None):
         """Adds an error message, output, or both to the test case"""
         if message:
