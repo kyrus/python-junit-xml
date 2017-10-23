@@ -1,18 +1,16 @@
 language: python
 
-env:
-    - TOXENV=py26
-    - TOXENV=py27
-    - TOXENV=pypy
-    - TOXENV=py33
-    - TOXENV=py34
-    - TOXENV=cover
+python:
+    - "2.6"
+    - "2.7"
+    - "3.3"
+    - "3.4"
 
 install:
-    - travis_retry pip install tox==1.6.1
+    - pip install tox-travis
 
 script:
-    - travis_retry tox
+    - tox
 
 notifications:
   email:
