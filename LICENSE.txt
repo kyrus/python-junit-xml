@@ -1,3 +1,5 @@
+Copyright for portions of project chadhutchins182/python-junit-xml are held by Bryan Beyer, 2017 as part of project kyrus/python-junit-xml. All other copyright for chadhutchins182/project python-junit-xml are held by Chad Hutchins, 2017.
+
 The MIT License
 
 Copyright (c) 2013 Kyrus Tech, Inc., Brian Beyer
