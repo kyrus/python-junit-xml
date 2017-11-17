@@ -378,7 +378,7 @@ class TestCase(object):
             self.skipped_output = output
 
     def add_timestamp(self, timestamp=None):
-        """Adds timestamp to the test case"""
+        """Adds timestamp to the test case. Time is in seconds"""
         if timestamp:
             self.timestamp = timestamp
 
