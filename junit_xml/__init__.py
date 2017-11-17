@@ -377,6 +377,11 @@ class TestCase(object):
         if output:
             self.skipped_output = output
 
+    def add_timestamp(self, timestamp=None):
+        """Adds timestamp to the test case"""
+        if timestamp:
+            self.timestamp = timestamp
+
     def is_failure(self):
         """returns true if this test case is a failure"""
         return self.failure_output or self.failure_message
