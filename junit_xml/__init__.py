@@ -347,6 +347,16 @@ class TestCase(object):
         self.skipped_message = None
         self.skipped_output = None
 
+    def add_stdout(self, stdout=None):
+        """Adds standard out to the test case"""
+        if stdout:
+            self.stdout = stdout
+
+    def add_stderr(self, stderr=None):
+        """Adds standard error to the test case"""
+        if stderr:
+            self.stderr = stderr
+
     def add_error_info(self, message=None, output=None, error_type=None):
         """Adds an error message, output, or both to the test case"""
         if message:
@@ -371,6 +381,11 @@ class TestCase(object):
             self.skipped_message = message
         if output:
             self.skipped_output = output
+
+    def add_timestamp(self, timestamp=None):
+        """Adds timestamp to the test case. Time is in seconds"""
+        if timestamp:
+            self.timestamp = timestamp
 
     def is_failure(self):
         """returns true if this test case is a failure"""
