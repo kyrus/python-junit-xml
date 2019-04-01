@@ -196,37 +196,37 @@ class TestSuite(object):
             test_case_element = ET.SubElement(xml_element, "testcase", test_case_attributes)
 
             # failures
-            if case.is_failure():
+            for failure in case.failures:
                 attrs = {"type": "failure"}
-                if case.failure_message:
-                    attrs["message"] = decode(case.failure_message, encoding)
-                if case.failure_type:
-                    attrs["type"] = decode(case.failure_type, encoding)
+                if failure['message']:
+                    attrs['message'] = decode(failure['message'], encoding)
+                if failure['type']:
+                    attrs['type'] = decode(failure['type'], encoding)
                 failure_element = ET.Element("failure", attrs)
-                if case.failure_output:
-                    failure_element.text = decode(case.failure_output, encoding)
+                if failure['output']:
+                    failure_element.text = decode(failure['output'], encoding)
                 test_case_element.append(failure_element)
 
             # errors
-            if case.is_error():
+            for error in case.errors:
                 attrs = {"type": "error"}
-                if case.error_message:
-                    attrs["message"] = decode(case.error_message, encoding)
-                if case.error_type:
-                    attrs["type"] = decode(case.error_type, encoding)
+                if error['message']:
+                    attrs['message'] = decode(error['message'], encoding)
+                if error['type']:
+                    attrs['type'] = decode(error['type'], encoding)
                 error_element = ET.Element("error", attrs)
-                if case.error_output:
-                    error_element.text = decode(case.error_output, encoding)
+                if error['output']:
+                    error_element.text = decode(error['output'], encoding)
                 test_case_element.append(error_element)
 
             # skippeds
-            if case.is_skipped():
+            for skipped in case.skipped:
                 attrs = {"type": "skipped"}
-                if case.skipped_message:
-                    attrs["message"] = decode(case.skipped_message, encoding)
+                if skipped['message']:
+                    attrs['message'] = decode(skipped['message'], encoding)
                 skipped_element = ET.Element("skipped", attrs)
-                if case.skipped_output:
-                    skipped_element.text = decode(case.skipped_output, encoding)
+                if skipped['output']:
+                    skipped_element.text = decode(skipped['output'], encoding)
                 test_case_element.append(skipped_element)
 
             # test stdout
@@ -370,48 +370,44 @@ class TestCase(object):
         self.stderr = stderr
 
         self.is_enabled = True
-        self.error_message = None
-        self.error_output = None
-        self.error_type = None
-        self.failure_message = None
-        self.failure_output = None
-        self.failure_type = None
-        self.skipped_message = None
-        self.skipped_output = None
+        self.errors = []
+        self.failures = []
+        self.skipped = []
 
     def add_error_info(self, message=None, output=None, error_type=None):
         """Adds an error message, output, or both to the test case"""
-        if message:
-            self.error_message = message
-        if output:
-            self.error_output = output
-        if error_type:
-            self.error_type = error_type
+        if message or output or error_type:
+            error = {}
+            error['message'] = message
+            error['output'] = output
+            error['type'] = error_type
+            self.errors.append(error)
 
     def add_failure_info(self, message=None, output=None, failure_type=None):
         """Adds a failure message, output, or both to the test case"""
-        if message:
-            self.failure_message = message
-        if output:
-            self.failure_output = output
-        if failure_type:
-            self.failure_type = failure_type
+        if message or output or failure_type:
+            failure = {}
+            failure['message'] = message
+            failure['output'] = output
+            failure['type'] = failure_type
+            self.failures.append(failure)
 
     def add_skipped_info(self, message=None, output=None):
         """Adds a skipped message, output, or both to the test case"""
-        if message:
-            self.skipped_message = message
-        if output:
-            self.skipped_output = output
+        if message or output:
+            skipped = {}
+            skipped['message'] = message
+            skipped['output'] = output
+            self.skipped.append(skipped)
 
     def is_failure(self):
         """returns true if this test case is a failure"""
-        return self.failure_output or self.failure_message
+        return (len(self.failures) > 0)
 
     def is_error(self):
         """returns true if this test case is an error"""
-        return self.error_output or self.error_message
+        return (len(self.errors) > 0)
 
     def is_skipped(self):
         """returns true if this test case has been skipped"""
-        return self.skipped_output or self.skipped_message
+        return (len(self.skipped) > 0)
