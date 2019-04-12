@@ -258,3 +258,67 @@ def test_init_unicode():
         error_message=decode("Skipped error äöü", "utf-8"),
         error_output=decode("I skippäd with an error!", "utf-8"),
     )
+
+
+def test_multiple_errors():
+    """Tests multiple errors in one test case"""
+    tc = Case("Multiple error", allow_multiple_subelements=True)
+    tc.add_error_info("First error", "First error message")
+    (_, tcs) = serialize_and_read(Suite("test", [tc]))[0]
+    verify_test_case(
+        tcs[0],
+        {"name": "Multiple error"},
+        errors=[{"message": "First error", "output": "First error message", "type": "error"}],
+    )
+    tc.add_error_info("Second error", "Second error message")
+    (_, tcs) = serialize_and_read(Suite("test", [tc]))[0]
+    verify_test_case(
+        tcs[0],
+        {"name": "Multiple error"},
+        errors=[
+            {"message": "First error", "output": "First error message", "type": "error"},
+            {"message": "Second error", "output": "Second error message", "type": "error"},
+        ],
+    )
+
+
+def test_multiple_failures():
+    """Tests multiple failures in one test case"""
+    tc = Case("Multiple failures", allow_multiple_subelements=True)
+    tc.add_failure_info("First failure", "First failure message")
+    (_, tcs) = serialize_and_read(Suite("test", [tc]))[0]
+    verify_test_case(
+        tcs[0],
+        {"name": "Multiple failures"},
+        failures=[{"message": "First failure", "output": "First failure message", "type": "failure"}],
+    )
+    tc.add_failure_info("Second failure", "Second failure message")
+    (_, tcs) = serialize_and_read(Suite("test", [tc]))[0]
+    verify_test_case(
+        tcs[0],
+        {"name": "Multiple failures"},
+        failures=[
+            {"message": "First failure", "output": "First failure message", "type": "failure"},
+            {"message": "Second failure", "output": "Second failure message", "type": "failure"},
+        ],
+    )
+
+
+def test_multiple_skipped():
+    """Tests multiple skipped messages in one test case"""
+    tc = Case("Multiple skipped", allow_multiple_subelements=True)
+    tc.add_skipped_info("First skipped", "First skipped message")
+    (_, tcs) = serialize_and_read(Suite("test", [tc]))[0]
+    verify_test_case(
+        tcs[0], {"name": "Multiple skipped"}, skipped=[{"message": "First skipped", "output": "First skipped message"}]
+    )
+    tc.add_skipped_info("Second skipped", "Second skipped message")
+    (_, tcs) = serialize_and_read(Suite("test", [tc]))[0]
+    verify_test_case(
+        tcs[0],
+        {"name": "Multiple skipped"},
+        skipped=[
+            {"message": "First skipped", "output": "First skipped message"},
+            {"message": "Second skipped", "output": "Second skipped message"},
+        ],
+    )
