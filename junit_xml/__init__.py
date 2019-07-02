@@ -168,7 +168,7 @@ class TestSuite(object):
             if case.assertions:
                 # Number of assertions in the test case
                 test_case_attributes['assertions'] = "%d" % case.assertions
-            if case.elapsed_sec:
+            if case.elapsed_sec is not None:
                 test_case_attributes['time'] = "%f" % case.elapsed_sec
             if case.timestamp:
                 test_case_attributes['timestamp'] = decode(case.timestamp, encoding)
