@@ -19,6 +19,7 @@ env:
   - TOXENV=py27
   - TOXENV=py36
   - TOXENV=cover
+  - TOXENV=flake8
 
 install:
   - travis_retry pip install tox==3.13.2
