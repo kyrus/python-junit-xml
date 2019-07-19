@@ -26,6 +26,9 @@ install:
 script:
   - travis_retry tox
 
+git:
+  depth: 1
+
 notifications:
   email:
     - brian@kyr.us
