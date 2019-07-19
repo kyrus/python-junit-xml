@@ -59,15 +59,15 @@ def decode(var, encoding):
     If not already unicode, decode it.
     """
     if PY2:
-        if isinstance(var, unicode):
+        if isinstance(var, unicode):  # NOQA
             ret = var
         elif isinstance(var, str):
             if encoding:
                 ret = var.decode(encoding)
             else:
-                ret = unicode(var)
+                ret = unicode(var)  # NOQA
         else:
-            ret = unicode(var)
+            ret = unicode(var)  # NOQA
     else:
         ret = str(var)
     return ret
