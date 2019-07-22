@@ -13,8 +13,7 @@ setup(
     author_email='brian@kyr.us',
     url='https://github.com/kyrus/python-junit-xml',
     license='MIT',
-    packages=find_packages(),
-    test_suite='test_junit_xml',
+    packages=find_packages(exclude=['tests']),
     description='Creates JUnit XML test result documents that can be read by '
                 'tools such as Jenkins',
     long_description=read('README.rst'),
