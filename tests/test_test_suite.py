@@ -5,11 +5,11 @@ import textwrap
 import pytest
 from six import PY2
 
-from asserts import verify_test_case
+from .asserts import verify_test_case
 from junit_xml import TestCase as Case
 from junit_xml import TestSuite as Suite
 from junit_xml import decode
-from serializer import serialize_and_read
+from .serializer import serialize_and_read
 
 
 def test_single_suite_single_test_case():

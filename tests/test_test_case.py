@@ -3,11 +3,11 @@ from __future__ import with_statement
 
 from six import u
 
-from asserts import verify_test_case
+from .asserts import verify_test_case
 from junit_xml import TestCase as Case
 from junit_xml import TestSuite as Suite
 from junit_xml import decode
-from serializer import serialize_and_read
+from .serializer import serialize_and_read
 
 
 def test_init():
