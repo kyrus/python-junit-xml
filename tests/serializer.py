@@ -28,7 +28,7 @@ def serialize_and_read(test_suites, to_file=False, prettyprint=False, encoding=N
         xml_string = Suite.to_xml_string(
             test_suites, prettyprint=prettyprint, encoding=encoding)
         if PY2:
-            assert isinstance(xml_string, unicode)  # NOQA
+            assert isinstance(xml_string, unicode)  # noqa: F821
         print("Serialized XML to string:\n%s" % xml_string)
         if encoding:
             xml_string = xml_string.encode(encoding)
