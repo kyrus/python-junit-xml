@@ -199,7 +199,7 @@ def test_to_xml_string():
                    Suite(name='suite2', test_cases=[Case(name='Test2')])]
     xml_string = Suite.to_xml_string(test_suites)
     if PY2:
-        assert isinstance(xml_string, unicode)  # NOQA
+        assert isinstance(xml_string, unicode)  # noqa: F821
     expected_xml_string = textwrap.dedent("""
         <?xml version="1.0" ?>
         <testsuites disabled="0" errors="0" failures="0" tests="2" time="0.0">
@@ -210,7 +210,7 @@ def test_to_xml_string():
         \t\t<testcase name="Test2"/>
         \t</testsuite>
         </testsuites>
-    """.strip("\n"))  # NOQA
+    """.strip("\n"))
     assert xml_string == expected_xml_string
 
 
