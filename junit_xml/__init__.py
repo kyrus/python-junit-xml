@@ -79,16 +79,28 @@ class TestSuite(object):
     Can handle unicode strings or binary strings if their encoding is provided.
     """
 
-    def __init__(self, name, test_cases=None, hostname=None, id=None,
-                 package=None, timestamp=None, properties=None, file=None,
-                 log=None, url=None, stdout=None, stderr=None):
+    def __init__(
+        self,
+        name,
+        test_cases=None,
+        hostname=None,
+        id=None,
+        package=None,
+        timestamp=None,
+        properties=None,
+        file=None,
+        log=None,
+        url=None,
+        stdout=None,
+        stderr=None,
+    ):
         self.name = name
         if not test_cases:
             test_cases = []
         try:
             iter(test_cases)
         except TypeError:
-            raise TypeError('test_cases must be a list of test cases')
+            raise TypeError("test_cases must be a list of test cases")
         self.test_cases = test_cases
         self.timestamp = timestamp
         self.hostname = hostname
@@ -111,36 +123,30 @@ class TestSuite(object):
 
         # build the test suite element
         test_suite_attributes = dict()
-        test_suite_attributes['name'] = decode(self.name, encoding)
+        test_suite_attributes["name"] = decode(self.name, encoding)
         if any(c.assertions for c in self.test_cases):
-            test_suite_attributes['assertions'] = \
-                str(sum([int(c.assertions) for c in self.test_cases if c.assertions]))
-        test_suite_attributes['disabled'] = \
-            str(len([c for c in self.test_cases if not c.is_enabled]))
-        test_suite_attributes['failures'] = \
-            str(len([c for c in self.test_cases if c.is_failure()]))
-        test_suite_attributes['errors'] = \
-            str(len([c for c in self.test_cases if c.is_error()]))
-        test_suite_attributes['skipped'] = \
-            str(len([c for c in self.test_cases if c.is_skipped()]))
-        test_suite_attributes['time'] = \
-            str(sum(c.elapsed_sec for c in self.test_cases if c.elapsed_sec))
-        test_suite_attributes['tests'] = str(len(self.test_cases))
+            test_suite_attributes["assertions"] = str(sum([int(c.assertions) for c in self.test_cases if c.assertions]))
+        test_suite_attributes["disabled"] = str(len([c for c in self.test_cases if not c.is_enabled]))
+        test_suite_attributes["failures"] = str(len([c for c in self.test_cases if c.is_failure()]))
+        test_suite_attributes["errors"] = str(len([c for c in self.test_cases if c.is_error()]))
+        test_suite_attributes["skipped"] = str(len([c for c in self.test_cases if c.is_skipped()]))
+        test_suite_attributes["time"] = str(sum(c.elapsed_sec for c in self.test_cases if c.elapsed_sec))
+        test_suite_attributes["tests"] = str(len(self.test_cases))
 
         if self.hostname:
-            test_suite_attributes['hostname'] = decode(self.hostname, encoding)
+            test_suite_attributes["hostname"] = decode(self.hostname, encoding)
         if self.id:
-            test_suite_attributes['id'] = decode(self.id, encoding)
+            test_suite_attributes["id"] = decode(self.id, encoding)
         if self.package:
-            test_suite_attributes['package'] = decode(self.package, encoding)
+            test_suite_attributes["package"] = decode(self.package, encoding)
         if self.timestamp:
-            test_suite_attributes['timestamp'] = decode(self.timestamp, encoding)
+            test_suite_attributes["timestamp"] = decode(self.timestamp, encoding)
         if self.file:
-            test_suite_attributes['file'] = decode(self.file, encoding)
+            test_suite_attributes["file"] = decode(self.file, encoding)
         if self.log:
-            test_suite_attributes['log'] = decode(self.log, encoding)
+            test_suite_attributes["log"] = decode(self.log, encoding)
         if self.url:
-            test_suite_attributes['url'] = decode(self.url, encoding)
+            test_suite_attributes["url"] = decode(self.url, encoding)
 
         xml_element = ET.Element("testsuite", test_suite_attributes)
 
@@ -148,7 +154,7 @@ class TestSuite(object):
         if self.properties:
             props_element = ET.SubElement(xml_element, "properties")
             for k, v in self.properties.items():
-                attrs = {'name': decode(k, encoding), 'value': decode(v, encoding)}
+                attrs = {"name": decode(k, encoding), "value": decode(v, encoding)}
                 ET.SubElement(props_element, "property", attrs)
 
         # add test suite stdout
@@ -164,39 +170,38 @@ class TestSuite(object):
         # test cases
         for case in self.test_cases:
             test_case_attributes = dict()
-            test_case_attributes['name'] = decode(case.name, encoding)
+            test_case_attributes["name"] = decode(case.name, encoding)
             if case.assertions:
                 # Number of assertions in the test case
-                test_case_attributes['assertions'] = "%d" % case.assertions
+                test_case_attributes["assertions"] = "%d" % case.assertions
             if case.elapsed_sec:
-                test_case_attributes['time'] = "%f" % case.elapsed_sec
+                test_case_attributes["time"] = "%f" % case.elapsed_sec
             if case.timestamp:
-                test_case_attributes['timestamp'] = decode(case.timestamp, encoding)
+                test_case_attributes["timestamp"] = decode(case.timestamp, encoding)
             if case.classname:
-                test_case_attributes['classname'] = decode(case.classname, encoding)
+                test_case_attributes["classname"] = decode(case.classname, encoding)
             if case.status:
-                test_case_attributes['status'] = decode(case.status, encoding)
+                test_case_attributes["status"] = decode(case.status, encoding)
             if case.category:
-                test_case_attributes['class'] = decode(case.category, encoding)
+                test_case_attributes["class"] = decode(case.category, encoding)
             if case.file:
-                test_case_attributes['file'] = decode(case.file, encoding)
+                test_case_attributes["file"] = decode(case.file, encoding)
             if case.line:
-                test_case_attributes['line'] = decode(case.line, encoding)
+                test_case_attributes["line"] = decode(case.line, encoding)
             if case.log:
-                test_case_attributes['log'] = decode(case.log, encoding)
+                test_case_attributes["log"] = decode(case.log, encoding)
             if case.url:
-                test_case_attributes['url'] = decode(case.url, encoding)
+                test_case_attributes["url"] = decode(case.url, encoding)
 
-            test_case_element = ET.SubElement(
-                xml_element, "testcase", test_case_attributes)
+            test_case_element = ET.SubElement(xml_element, "testcase", test_case_attributes)
 
             # failures
             if case.is_failure():
-                attrs = {'type': 'failure'}
+                attrs = {"type": "failure"}
                 if case.failure_message:
-                    attrs['message'] = decode(case.failure_message, encoding)
+                    attrs["message"] = decode(case.failure_message, encoding)
                 if case.failure_type:
-                    attrs['type'] = decode(case.failure_type, encoding)
+                    attrs["type"] = decode(case.failure_type, encoding)
                 failure_element = ET.Element("failure", attrs)
                 if case.failure_output:
                     failure_element.text = decode(case.failure_output, encoding)
@@ -204,11 +209,11 @@ class TestSuite(object):
 
             # errors
             if case.is_error():
-                attrs = {'type': 'error'}
+                attrs = {"type": "error"}
                 if case.error_message:
-                    attrs['message'] = decode(case.error_message, encoding)
+                    attrs["message"] = decode(case.error_message, encoding)
                 if case.error_type:
-                    attrs['type'] = decode(case.error_type, encoding)
+                    attrs["type"] = decode(case.error_type, encoding)
                 error_element = ET.Element("error", attrs)
                 if case.error_output:
                     error_element.text = decode(case.error_output, encoding)
@@ -216,9 +221,9 @@ class TestSuite(object):
 
             # skippeds
             if case.is_skipped():
-                attrs = {'type': 'skipped'}
+                attrs = {"type": "skipped"}
                 if case.skipped_message:
-                    attrs['message'] = decode(case.skipped_message, encoding)
+                    attrs["message"] = decode(case.skipped_message, encoding)
                 skipped_element = ET.Element("skipped", attrs)
                 if case.skipped_output:
                     skipped_element.text = decode(case.skipped_output, encoding)
@@ -249,15 +254,15 @@ class TestSuite(object):
         try:
             iter(test_suites)
         except TypeError:
-            raise TypeError('test_suites must be a list of test suites')
+            raise TypeError("test_suites must be a list of test suites")
 
         xml_element = ET.Element("testsuites")
         attributes = defaultdict(int)
         for ts in test_suites:
             ts_xml = ts.build_xml_doc(encoding=encoding)
-            for key in ['failures', 'errors', 'tests', 'disabled']:
+            for key in ["failures", "errors", "tests", "disabled"]:
                 attributes[key] += int(ts_xml.get(key, 0))
-            for key in ['time']:
+            for key in ["time"]:
                 attributes[key] += float(ts_xml.get(key, 0))
             xml_element.append(ts_xml)
         for key, value in iteritems(attributes):
@@ -265,13 +270,12 @@ class TestSuite(object):
 
         xml_string = ET.tostring(xml_element, encoding=encoding)
         # is encoded now
-        xml_string = TestSuite._clean_illegal_xml_chars(
-            xml_string.decode(encoding or 'utf-8'))
+        xml_string = TestSuite._clean_illegal_xml_chars(xml_string.decode(encoding or "utf-8"))
         # is unicode now
 
         if prettyprint:
             # minidom.parseString() works just on correctly encoded binary strings
-            xml_string = xml_string.encode(encoding or 'utf-8')
+            xml_string = xml_string.encode(encoding or "utf-8")
             xml_string = xml.dom.minidom.parseString(xml_string)
             # toprettyxml() produces unicode if no encoding is being passed or binary string with an encoding
             xml_string = xml_string.toprettyxml(encoding=encoding)
@@ -285,8 +289,7 @@ class TestSuite(object):
         """
         Writes the JUnit XML document to a file.
         """
-        xml_string = TestSuite.to_xml_string(
-            test_suites, prettyprint=prettyprint, encoding=encoding)
+        xml_string = TestSuite.to_xml_string(test_suites, prettyprint=prettyprint, encoding=encoding)
         # has problems with encoded str with non-ASCII (non-default-encoding) characters!
         file_descriptor.write(xml_string)
 
@@ -299,30 +302,59 @@ class TestSuite(object):
         """
 
         illegal_unichrs = [
-            (0x00, 0x08), (0x0B, 0x1F), (0x7F, 0x84), (0x86, 0x9F),
-            (0xD800, 0xDFFF), (0xFDD0, 0xFDDF), (0xFFFE, 0xFFFF),
-            (0x1FFFE, 0x1FFFF), (0x2FFFE, 0x2FFFF), (0x3FFFE, 0x3FFFF),
-            (0x4FFFE, 0x4FFFF), (0x5FFFE, 0x5FFFF), (0x6FFFE, 0x6FFFF),
-            (0x7FFFE, 0x7FFFF), (0x8FFFE, 0x8FFFF), (0x9FFFE, 0x9FFFF),
-            (0xAFFFE, 0xAFFFF), (0xBFFFE, 0xBFFFF), (0xCFFFE, 0xCFFFF),
-            (0xDFFFE, 0xDFFFF), (0xEFFFE, 0xEFFFF), (0xFFFFE, 0xFFFFF),
-            (0x10FFFE, 0x10FFFF)]
+            (0x00, 0x08),
+            (0x0B, 0x1F),
+            (0x7F, 0x84),
+            (0x86, 0x9F),
+            (0xD800, 0xDFFF),
+            (0xFDD0, 0xFDDF),
+            (0xFFFE, 0xFFFF),
+            (0x1FFFE, 0x1FFFF),
+            (0x2FFFE, 0x2FFFF),
+            (0x3FFFE, 0x3FFFF),
+            (0x4FFFE, 0x4FFFF),
+            (0x5FFFE, 0x5FFFF),
+            (0x6FFFE, 0x6FFFF),
+            (0x7FFFE, 0x7FFFF),
+            (0x8FFFE, 0x8FFFF),
+            (0x9FFFE, 0x9FFFF),
+            (0xAFFFE, 0xAFFFF),
+            (0xBFFFE, 0xBFFFF),
+            (0xCFFFE, 0xCFFFF),
+            (0xDFFFE, 0xDFFFF),
+            (0xEFFFE, 0xEFFFF),
+            (0xFFFFE, 0xFFFFF),
+            (0x10FFFE, 0x10FFFF),
+        ]
 
-        illegal_ranges = ["%s-%s" % (unichr(low), unichr(high))
-                          for (low, high) in illegal_unichrs
-                          if low < sys.maxunicode]
+        illegal_ranges = [
+            "%s-%s" % (unichr(low), unichr(high)) for (low, high) in illegal_unichrs if low < sys.maxunicode
+        ]
 
-        illegal_xml_re = re.compile(u('[%s]') % u('').join(illegal_ranges))
-        return illegal_xml_re.sub('', string_to_clean)
+        illegal_xml_re = re.compile(u("[%s]") % u("").join(illegal_ranges))
+        return illegal_xml_re.sub("", string_to_clean)
 
 
 class TestCase(object):
     """A JUnit test case with a result and possibly some stdout or stderr"""
 
-    def __init__(self, name, classname=None, elapsed_sec=None, stdout=None,
-                 stderr=None, assertions=None, timestamp=None, status=None,
-                 category=None, file=None, line=None, log=None, group=None,
-                 url=None):
+    def __init__(
+        self,
+        name,
+        classname=None,
+        elapsed_sec=None,
+        stdout=None,
+        stderr=None,
+        assertions=None,
+        timestamp=None,
+        status=None,
+        category=None,
+        file=None,
+        line=None,
+        log=None,
+        group=None,
+        url=None,
+    ):
         self.name = name
         self.assertions = assertions
         self.elapsed_sec = elapsed_sec
