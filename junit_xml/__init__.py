@@ -88,7 +88,7 @@ class TestSuite(object):
         try:
             iter(test_cases)
         except TypeError:
-            raise Exception('test_cases must be a list of test cases')
+            raise TypeError('test_cases must be a list of test cases')
         self.test_cases = test_cases
         self.timestamp = timestamp
         self.hostname = hostname
@@ -249,7 +249,7 @@ class TestSuite(object):
         try:
             iter(test_suites)
         except TypeError:
-            raise Exception('test_suites must be a list of test suites')
+            raise TypeError('test_suites must be a list of test suites')
 
         xml_element = ET.Element("testsuites")
         attributes = defaultdict(int)

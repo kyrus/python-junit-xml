@@ -13,7 +13,7 @@ from .serializer import serialize_and_read
 
 
 def test_single_suite_single_test_case():
-    with pytest.raises(Exception) as excinfo:
+    with pytest.raises(TypeError) as excinfo:
         serialize_and_read(Suite('test', Case('Test1')), to_file=True)[0]
     assert str(excinfo.value) == 'test_cases must be a list of test cases'
 
@@ -217,6 +217,6 @@ def test_to_xml_string():
 def test_to_xml_string_test_suites_not_a_list():
     test_suites = Suite('suite1', [Case('Test1')])
 
-    with pytest.raises(Exception) as excinfo:
+    with pytest.raises(TypeError) as excinfo:
         Suite.to_xml_string(test_suites)
     assert str(excinfo.value) == 'test_suites must be a list of test suites'
