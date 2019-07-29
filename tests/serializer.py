@@ -19,14 +19,13 @@ def serialize_and_read(test_suites, to_file=False, prettyprint=False, encoding=N
     if to_file:
         fd, filename = tempfile.mkstemp(text=True)
         os.close(fd)
-        with codecs.open(filename, mode='w', encoding=encoding) as f:
+        with codecs.open(filename, mode="w", encoding=encoding) as f:
             Suite.to_file(f, test_suites, prettyprint=prettyprint, encoding=encoding)
         print("Serialized XML to temp file [%s]" % filename)
         xmldoc = minidom.parse(filename)
         os.remove(filename)
     else:
-        xml_string = Suite.to_xml_string(
-            test_suites, prettyprint=prettyprint, encoding=encoding)
+        xml_string = Suite.to_xml_string(test_suites, prettyprint=prettyprint, encoding=encoding)
         if PY2:
             assert isinstance(xml_string, unicode)  # noqa: F821
         print("Serialized XML to string:\n%s" % xml_string)
