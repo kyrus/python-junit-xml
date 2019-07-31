@@ -352,7 +352,6 @@ class TestCase(object):
         file=None,
         line=None,
         log=None,
-        group=None,
         url=None,
     ):
         self.name = name
