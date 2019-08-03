@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
+import warnings
 from collections import defaultdict
 import sys
 import re
@@ -250,89 +251,112 @@ class TestSuite(object):
         @param encoding: The encoding of the input.
         @return: unicode string
         """
-
-        try:
-            iter(test_suites)
-        except TypeError:
-            raise TypeError("test_suites must be a list of test suites")
-
-        xml_element = ET.Element("testsuites")
-        attributes = defaultdict(int)
-        for ts in test_suites:
-            ts_xml = ts.build_xml_doc(encoding=encoding)
-            for key in ["failures", "errors", "tests", "disabled"]:
-                attributes[key] += int(ts_xml.get(key, 0))
-            for key in ["time"]:
-                attributes[key] += float(ts_xml.get(key, 0))
-            xml_element.append(ts_xml)
-        for key, value in iteritems(attributes):
-            xml_element.set(key, str(value))
-
-        xml_string = ET.tostring(xml_element, encoding=encoding)
-        # is encoded now
-        xml_string = TestSuite._clean_illegal_xml_chars(xml_string.decode(encoding or "utf-8"))
-        # is unicode now
-
-        if prettyprint:
-            # minidom.parseString() works just on correctly encoded binary strings
-            xml_string = xml_string.encode(encoding or "utf-8")
-            xml_string = xml.dom.minidom.parseString(xml_string)
-            # toprettyxml() produces unicode if no encoding is being passed or binary string with an encoding
-            xml_string = xml_string.toprettyxml(encoding=encoding)
-            if encoding:
-                xml_string = xml_string.decode(encoding)
-            # is unicode now
-        return xml_string
+        warnings.warn(
+            "Testsuite.to_xml_string is deprecated. It will be removed in version 2.0.0. "
+            "Use function to_xml_report_string",
+            DeprecationWarning,
+        )
+        return to_xml_report_string(test_suites, prettyprint, encoding)
 
     @staticmethod
     def to_file(file_descriptor, test_suites, prettyprint=True, encoding=None):
         """
         Writes the JUnit XML document to a file.
         """
-        xml_string = TestSuite.to_xml_string(test_suites, prettyprint=prettyprint, encoding=encoding)
-        # has problems with encoded str with non-ASCII (non-default-encoding) characters!
-        file_descriptor.write(xml_string)
+        warnings.warn(
+            "Testsuite.to_file is deprecated. It will be removed in version 2.0.0. Use function to_xml_report_file",
+            DeprecationWarning,
+        )
+        to_xml_report_file(file_descriptor, test_suites, prettyprint, encoding)
 
-    @staticmethod
-    def _clean_illegal_xml_chars(string_to_clean):
-        """
-        Removes any illegal unicode characters from the given XML string.
 
-        @see: http://stackoverflow.com/questions/1707890/fast-way-to-filter-illegal-xml-unicode-chars-in-python
-        """
+def to_xml_report_string(test_suites, prettyprint=True, encoding=None):
+    """
+    Returns the string representation of the JUnit XML document.
+    @param encoding: The encoding of the input.
+    @return: unicode string
+    """
 
-        illegal_unichrs = [
-            (0x00, 0x08),
-            (0x0B, 0x1F),
-            (0x7F, 0x84),
-            (0x86, 0x9F),
-            (0xD800, 0xDFFF),
-            (0xFDD0, 0xFDDF),
-            (0xFFFE, 0xFFFF),
-            (0x1FFFE, 0x1FFFF),
-            (0x2FFFE, 0x2FFFF),
-            (0x3FFFE, 0x3FFFF),
-            (0x4FFFE, 0x4FFFF),
-            (0x5FFFE, 0x5FFFF),
-            (0x6FFFE, 0x6FFFF),
-            (0x7FFFE, 0x7FFFF),
-            (0x8FFFE, 0x8FFFF),
-            (0x9FFFE, 0x9FFFF),
-            (0xAFFFE, 0xAFFFF),
-            (0xBFFFE, 0xBFFFF),
-            (0xCFFFE, 0xCFFFF),
-            (0xDFFFE, 0xDFFFF),
-            (0xEFFFE, 0xEFFFF),
-            (0xFFFFE, 0xFFFFF),
-            (0x10FFFE, 0x10FFFF),
-        ]
+    try:
+        iter(test_suites)
+    except TypeError:
+        raise TypeError("test_suites must be a list of test suites")
 
-        illegal_ranges = [
-            "%s-%s" % (unichr(low), unichr(high)) for (low, high) in illegal_unichrs if low < sys.maxunicode
-        ]
+    xml_element = ET.Element("testsuites")
+    attributes = defaultdict(int)
+    for ts in test_suites:
+        ts_xml = ts.build_xml_doc(encoding=encoding)
+        for key in ["failures", "errors", "tests", "disabled"]:
+            attributes[key] += int(ts_xml.get(key, 0))
+        for key in ["time"]:
+            attributes[key] += float(ts_xml.get(key, 0))
+        xml_element.append(ts_xml)
+    for key, value in iteritems(attributes):
+        xml_element.set(key, str(value))
 
-        illegal_xml_re = re.compile(u("[%s]") % u("").join(illegal_ranges))
-        return illegal_xml_re.sub("", string_to_clean)
+    xml_string = ET.tostring(xml_element, encoding=encoding)
+    # is encoded now
+    xml_string = _clean_illegal_xml_chars(xml_string.decode(encoding or "utf-8"))
+    # is unicode now
+
+    if prettyprint:
+        # minidom.parseString() works just on correctly encoded binary strings
+        xml_string = xml_string.encode(encoding or "utf-8")
+        xml_string = xml.dom.minidom.parseString(xml_string)
+        # toprettyxml() produces unicode if no encoding is being passed or binary string with an encoding
+        xml_string = xml_string.toprettyxml(encoding=encoding)
+        if encoding:
+            xml_string = xml_string.decode(encoding)
+        # is unicode now
+    return xml_string
+
+
+def to_xml_report_file(file_descriptor, test_suites, prettyprint=True, encoding=None):
+    """
+    Writes the JUnit XML document to a file.
+    """
+    xml_string = to_xml_report_string(test_suites, prettyprint=prettyprint, encoding=encoding)
+    # has problems with encoded str with non-ASCII (non-default-encoding) characters!
+    file_descriptor.write(xml_string)
+
+
+def _clean_illegal_xml_chars(string_to_clean):
+    """
+    Removes any illegal unicode characters from the given XML string.
+
+    @see: http://stackoverflow.com/questions/1707890/fast-way-to-filter-illegal-xml-unicode-chars-in-python
+    """
+
+    illegal_unichrs = [
+        (0x00, 0x08),
+        (0x0B, 0x1F),
+        (0x7F, 0x84),
+        (0x86, 0x9F),
+        (0xD800, 0xDFFF),
+        (0xFDD0, 0xFDDF),
+        (0xFFFE, 0xFFFF),
+        (0x1FFFE, 0x1FFFF),
+        (0x2FFFE, 0x2FFFF),
+        (0x3FFFE, 0x3FFFF),
+        (0x4FFFE, 0x4FFFF),
+        (0x5FFFE, 0x5FFFF),
+        (0x6FFFE, 0x6FFFF),
+        (0x7FFFE, 0x7FFFF),
+        (0x8FFFE, 0x8FFFF),
+        (0x9FFFE, 0x9FFFF),
+        (0xAFFFE, 0xAFFFF),
+        (0xBFFFE, 0xBFFFF),
+        (0xCFFFE, 0xCFFFF),
+        (0xDFFFE, 0xDFFFF),
+        (0xEFFFE, 0xEFFFF),
+        (0xFFFFE, 0xFFFFF),
+        (0x10FFFE, 0x10FFFF),
+    ]
+
+    illegal_ranges = ["%s-%s" % (unichr(low), unichr(high)) for (low, high) in illegal_unichrs if low < sys.maxunicode]
+
+    illegal_xml_re = re.compile(u("[%s]") % u("").join(illegal_ranges))
+    return illegal_xml_re.sub("", string_to_clean)
 
 
 class TestCase(object):

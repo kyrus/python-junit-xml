@@ -1,14 +1,16 @@
 # -*- coding: UTF-8 -*-
 from __future__ import with_statement
+
 import textwrap
+import warnings
 
 import pytest
-from six import PY2
+from six import PY2, StringIO
 
 from .asserts import verify_test_case
 from junit_xml import TestCase as Case
 from junit_xml import TestSuite as Suite
-from junit_xml import decode
+from junit_xml import decode, to_xml_report_string
 from .serializer import serialize_and_read
 
 
@@ -194,7 +196,7 @@ def test_to_xml_string():
         Suite(name="suite1", test_cases=[Case(name="Test1")]),
         Suite(name="suite2", test_cases=[Case(name="Test2")]),
     ]
-    xml_string = Suite.to_xml_string(test_suites)
+    xml_string = to_xml_report_string(test_suites)
     if PY2:
         assert isinstance(xml_string, unicode)  # noqa: F821
     expected_xml_string = textwrap.dedent(
@@ -219,5 +221,21 @@ def test_to_xml_string_test_suites_not_a_list():
     test_suites = Suite("suite1", [Case("Test1")])
 
     with pytest.raises(TypeError) as excinfo:
-        Suite.to_xml_string(test_suites)
+        to_xml_report_string(test_suites)
     assert str(excinfo.value) == "test_suites must be a list of test suites"
+
+
+def test_deprecated_to_xml_string():
+    with warnings.catch_warnings(record=True) as w:
+        Suite.to_xml_string([])
+        assert len(w) == 1
+        assert issubclass(w[0].category, DeprecationWarning)
+        assert "Testsuite.to_xml_string is deprecated" in str(w[0].message)
+
+
+def test_deprecated_to_file():
+    with warnings.catch_warnings(record=True) as w:
+        Suite.to_file(StringIO(), [])
+        assert len(w) == 1
+        assert issubclass(w[0].category, DeprecationWarning)
+        assert "Testsuite.to_file is deprecated" in str(w[0].message)
