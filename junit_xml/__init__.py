@@ -124,15 +124,15 @@ class TestSuite(object):
 
         # build the test suite element
         test_suite_attributes = dict()
-        test_suite_attributes["name"] = decode(self.name, encoding)
         if any(c.assertions for c in self.test_cases):
             test_suite_attributes["assertions"] = str(sum([int(c.assertions) for c in self.test_cases if c.assertions]))
         test_suite_attributes["disabled"] = str(len([c for c in self.test_cases if not c.is_enabled]))
-        test_suite_attributes["failures"] = str(len([c for c in self.test_cases if c.is_failure()]))
         test_suite_attributes["errors"] = str(len([c for c in self.test_cases if c.is_error()]))
+        test_suite_attributes["failures"] = str(len([c for c in self.test_cases if c.is_failure()]))
+        test_suite_attributes["name"] = decode(self.name, encoding)
         test_suite_attributes["skipped"] = str(len([c for c in self.test_cases if c.is_skipped()]))
-        test_suite_attributes["time"] = str(sum(c.elapsed_sec for c in self.test_cases if c.elapsed_sec))
         test_suite_attributes["tests"] = str(len(self.test_cases))
+        test_suite_attributes["time"] = str(sum(c.elapsed_sec for c in self.test_cases if c.elapsed_sec))
 
         if self.hostname:
             test_suite_attributes["hostname"] = decode(self.hostname, encoding)
@@ -288,7 +288,7 @@ def to_xml_report_string(test_suites, prettyprint=True, encoding=None):
     attributes = defaultdict(int)
     for ts in test_suites:
         ts_xml = ts.build_xml_doc(encoding=encoding)
-        for key in ["failures", "errors", "tests", "disabled"]:
+        for key in ["disabled", "errors", "failures", "tests"]:
             attributes[key] += int(ts_xml.get(key, 0))
         for key in ["time"]:
             attributes[key] += float(ts_xml.get(key, 0))
