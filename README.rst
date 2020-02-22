@@ -89,3 +89,10 @@ Running the tests
     pip install tox
     tox
 
+Releasing a new version
+-----------------------
+
+1. Bump version in `setup.py`
+2. Build distribution with `python setup.py sdist bdist_wheel`
+3. Upload to Pypi with `twine upload dist/*`
+4. Verify the new version was uploaded at https://pypi.org/project/junit-xml/#history
