@@ -6,15 +6,16 @@ import os
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
+
 setup(
     name='junit-xml',
     author='Brian Beyer',
     author_email='brian@kyr.us',
     maintainer='Chad Hutchins',
-    maintainer_email='chad@hutchins.house', 
+    maintainer_email='chad@hutchins.house',
     url='https://github.com/chadhutchins182/python-junit-xml',
     license='MIT',
-    packages=find_packages(),
+    packages=find_packages(exclude=["tests"]),
     test_suite='test_junit_xml',
     description='Creates JUnit XML test result documents that can be read by '
                 'tools such as Atlassian Bamboo or Jenkins',
@@ -30,8 +31,8 @@ setup(
         'Programming Language :: Python :: 3',
         'Topic :: Software Development :: Build Tools',
         'Topic :: Software Development :: Testing',
-        ],
+    ],
     install_requires=[
         'six'
-        ]
-    )
+    ]
+)
