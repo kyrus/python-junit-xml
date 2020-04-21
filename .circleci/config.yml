@@ -37,9 +37,11 @@ jobs:
             . venv/bin/activate
             coverage run -m pytest tests
 
-      # store test results
       - store_test_results:
           path: test-results
+      - store_artifacts:
+          path: test-results
+          destination: tr1
 
   test-3.7:
     <<: *test-template
