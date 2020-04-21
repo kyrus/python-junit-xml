@@ -37,10 +37,9 @@ jobs:
             . venv/bin/activate
             coverage run -m pytest tests
 
-      # store artifacts (for example logs, binaries, etc)
-      # to be available in the web app or through the API
-      - store_artifacts:
-          path: test-reports
+      # store test results
+      - store_test_results:
+          path: test-results
 
   test-3.7:
     <<: *test-template
