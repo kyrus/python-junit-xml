@@ -1,50 +1,53 @@
-# Python CircleCI 2.0 configuration file
-#
-# Check https://circleci.com/docs/2.0/language-python/ for more details
-#
-# Originally from: https://stackoverflow.com/questions/59972209/circleci-for-simple-python-project-with-tox-how-to-test-multiple-python-environ
-#
 version: 2
+workflows:
+  version: 2
+  test:
+    jobs:
+      - test-3.6
+      - test-3.7
+      - test-3.8
 jobs:
-  build:
+  test-3.6: &test-template
     docker:
-      # specify the version you desire here
-      # CircleCI maintains a library of pre-built images
-      # documented at https://circleci.com/docs/2.0/circleci-images/
-      - image: circleci/python:3.7
-
+      - image: circleci/python:3.6
     working_directory: ~/repo
-
     steps:
       - checkout
-
-      # Download and cache dependencies
       - restore_cache:
           keys:
-            - v1-dependencies-{{ checksum "requirements.txt" }}
-            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-{{ checksum "requirements_dev.txt" }}
             - v1-dependencies-
-
       - run:
           name: install dependencies
           command: |
             python3 -m venv venv
             . venv/bin/activate
             pip install -e .
-            pip install tox
+            pip install coverage
+            pip install pytest
 
       - save_cache:
           paths:
             - ./venv
-          key: v1-dependencies-{{ checksum "requirements.txt" }}
+          key: v1-dependencies-{{ checksum "requirements_dev.txt" }}
 
-      # run tests with tox
       - run:
           name: run tests
           command: |
             . venv/bin/activate
-            tox
+            coverage run -m pytest tests
 
+      # store artifacts (for example logs, binaries, etc)
+      # to be available in the web app or through the API
       - store_artifacts:
           path: test-reports
-          destination: test-reports
+
+  test-3.7:
+    <<: *test-template
+    docker:
+      - image: circleci/python:3.7
+
+  test-3.8:
+    <<: *test-template
+    docker:
+      - image: circleci/python:3.8
