@@ -4,10 +4,17 @@ from __future__ import with_statement
 import textwrap
 import warnings
 
+import sys
+import os
+
 import pytest
 from six import PY2, StringIO
 
-from .asserts import verify_test_case
+
+junitpath = os.path.normpath('../junit_xml')
+sys.path.append(junitpath)
+
+from asserts import verify_test_case
 from junit_xml import TestCase as Case
 from junit_xml import TestSuite as Suite
 from junit_xml import decode, to_xml_report_string
@@ -198,7 +205,7 @@ def test_to_xml_string():
     ]
     xml_string = to_xml_report_string(test_suites)
     if PY2:
-        assert isinstance(xml_string, unicode)  # noqa: F821
+        assert isinstance(xml_string, unicode)  # pylint: disable=undefined-variable
     expected_xml_string = textwrap.dedent(
         """
         <?xml version="1.0" ?>

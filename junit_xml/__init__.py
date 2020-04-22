@@ -60,15 +60,15 @@ def decode(var, encoding):
     If not already unicode, decode it.
     """
     if PY2:
-        if isinstance(var, unicode):  # noqa: F821
+        if isinstance(var, unicode):  # pylint: disable=undefined-variable
             ret = var
         elif isinstance(var, str):
             if encoding:
                 ret = var.decode(encoding)
             else:
-                ret = unicode(var)  # noqa: F821
+                ret = unicode(var)  # pylint: disable=undefined-variable
         else:
-            ret = unicode(var)  # noqa: F821
+            ret = unicode(var)  # pylint: disable=undefined-variable
     else:
         ret = str(var)
     return ret
