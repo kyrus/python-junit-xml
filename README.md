@@ -1,6 +1,7 @@
 python-junit-xml
 ================
-[![Build Status](https://travis-ci.org/chadhutchins182/python-junit-xml.svg?branch=master)](https://travis-ci.org/chadhutchins182/python-junit-xml)
+
+[![chadhutchins182](https://circleci.com/gh/chadhutchins182/python-junit-xml.svg?style=shield)](https://app.circleci.com/pipelines/github/chadhutchins182/python-junit-xml)
 
 About
 -----
