@@ -9,18 +9,20 @@ from junit_xml import TestSuite as Suite
 from junit_xml import decode
 from .serializer import serialize_and_read
 
-
 def test_init():
+    #pylint: disable=unused-variable
     ts, tcs = serialize_and_read(Suite("test", [Case("Test1")]))[0]
     verify_test_case(tcs[0], {"name": "Test1"})
 
 
 def test_init_classname():
+    #pylint: disable=unused-variable
     ts, tcs = serialize_and_read(Suite("test", [Case(name="Test1", classname="some.class.name")]))[0]
     verify_test_case(tcs[0], {"name": "Test1", "classname": "some.class.name"})
 
 
 def test_init_classname_time():
+    #pylint: disable=unused-variable
     ts, tcs = serialize_and_read(Suite("test", [Case(name="Test1", classname="some.class.name", elapsed_sec=123.345)]))[
         0
     ]
@@ -28,6 +30,7 @@ def test_init_classname_time():
 
 
 def test_init_classname_time_timestamp():
+    #pylint: disable=unused-variable
     ts, tcs = serialize_and_read(
         Suite("test", [Case(name="Test1", classname="some.class.name", elapsed_sec=123.345, timestamp=99999)])
     )[0]
@@ -37,6 +40,7 @@ def test_init_classname_time_timestamp():
 
 
 def test_init_stderr():
+    #pylint: disable=unused-variable
     ts, tcs = serialize_and_read(
         Suite("test", [Case(name="Test1", classname="some.class.name", elapsed_sec=123.345, stderr="I am stderr!")])
     )[0]
@@ -46,6 +50,7 @@ def test_init_stderr():
 
 
 def test_init_stdout_stderr():
+    #pylint: disable=unused-variable
     ts, tcs = serialize_and_read(
         Suite(
             "test",
@@ -71,6 +76,7 @@ def test_init_stdout_stderr():
 def test_init_disable():
     tc = Case("Disabled-Test")
     tc.is_enabled = False
+    #pylint: disable=unused-variable
     ts, tcs = serialize_and_read(Suite("test", [tc]))[0]
     verify_test_case(tcs[0], {"name": "Disabled-Test"})
 
@@ -78,6 +84,7 @@ def test_init_disable():
 def test_init_failure_message():
     tc = Case("Failure-Message")
     tc.add_failure_info("failure message")
+    #pylint: disable=unused-variable
     ts, tcs = serialize_and_read(Suite("test", [tc]))[0]
     verify_test_case(tcs[0], {"name": "Failure-Message"}, failure_message="failure message")
 
@@ -85,6 +92,7 @@ def test_init_failure_message():
 def test_init_failure_output():
     tc = Case("Failure-Output")
     tc.add_failure_info(output="I failed!")
+    #pylint: disable=unused-variable
     ts, tcs = serialize_and_read(Suite("test", [tc]))[0]
     verify_test_case(tcs[0], {"name": "Failure-Output"}, failure_output="I failed!")
 
@@ -92,6 +100,7 @@ def test_init_failure_output():
 def test_init_failure_type():
     tc = Case("Failure-Type")
     tc.add_failure_info(failure_type="com.example.Error")
+    #pylint: disable=unused-variable
     ts, tcs = serialize_and_read(Suite("test", [tc]))[0]
     verify_test_case(tcs[0], {"name": "Failure-Type"})
 
@@ -105,6 +114,7 @@ def test_init_failure_type():
 def test_init_failure():
     tc = Case("Failure-Message-and-Output")
     tc.add_failure_info("failure message", "I failed!")
+    #pylint: disable=unused-variable
     ts, tcs = serialize_and_read(Suite("test", [tc]))[0]
     verify_test_case(
         tcs[0],
@@ -118,6 +128,7 @@ def test_init_failure():
 def test_init_error_message():
     tc = Case("Error-Message")
     tc.add_error_info("error message")
+    #pylint: disable=unused-variable
     ts, tcs = serialize_and_read(Suite("test", [tc]))[0]
     verify_test_case(tcs[0], {"name": "Error-Message"}, error_message="error message")
 
@@ -125,6 +136,7 @@ def test_init_error_message():
 def test_init_error_output():
     tc = Case("Error-Output")
     tc.add_error_info(output="I errored!")
+    #pylint: disable=unused-variable
     ts, tcs = serialize_and_read(Suite("test", [tc]))[0]
     verify_test_case(tcs[0], {"name": "Error-Output"}, error_output="I errored!")
 
@@ -132,6 +144,7 @@ def test_init_error_output():
 def test_init_error_type():
     tc = Case("Error-Type")
     tc.add_error_info(error_type="com.example.Error")
+    #pylint: disable=unused-variable
     ts, tcs = serialize_and_read(Suite("test", [tc]))[0]
     verify_test_case(tcs[0], {"name": "Error-Type"})
 
@@ -143,6 +156,7 @@ def test_init_error_type():
 def test_init_error():
     tc = Case("Error-Message-and-Output")
     tc.add_error_info("error message", "I errored!")
+    #pylint: disable=unused-variable
     ts, tcs = serialize_and_read(Suite("test", [tc]))[0]
     verify_test_case(
         tcs[0],
@@ -156,6 +170,7 @@ def test_init_error():
 def test_init_skipped_message():
     tc = Case("Skipped-Message")
     tc.add_skipped_info("skipped message")
+    #pylint: disable=unused-variable
     ts, tcs = serialize_and_read(Suite("test", [tc]))[0]
     verify_test_case(tcs[0], {"name": "Skipped-Message"}, skipped_message="skipped message")
 
@@ -163,6 +178,7 @@ def test_init_skipped_message():
 def test_init_skipped_output():
     tc = Case("Skipped-Output")
     tc.add_skipped_info(output="I skipped!")
+    #pylint: disable=unused-variable
     ts, tcs = serialize_and_read(Suite("test", [tc]))[0]
     verify_test_case(tcs[0], {"name": "Skipped-Output"}, skipped_output="I skipped!")
 
@@ -171,6 +187,7 @@ def test_init_skipped_err_output():
     tc = Case("Skipped-Output")
     tc.add_skipped_info(output="I skipped!")
     tc.add_error_info(output="I skipped with an error!")
+    #pylint: disable=unused-variable
     ts, tcs = serialize_and_read(Suite("test", [tc]))[0]
     verify_test_case(
         tcs[0], {"name": "Skipped-Output"}, skipped_output="I skipped!", error_output="I skipped with an error!"
@@ -180,6 +197,7 @@ def test_init_skipped_err_output():
 def test_init_skipped():
     tc = Case("Skipped-Message-and-Output")
     tc.add_skipped_info("skipped message", "I skipped!")
+    #pylint: disable=unused-variable
     ts, tcs = serialize_and_read(Suite("test", [tc]))[0]
     verify_test_case(
         tcs[0], {"name": "Skipped-Message-and-Output"}, skipped_message="skipped message", skipped_output="I skipped!"
@@ -189,6 +207,7 @@ def test_init_skipped():
 def test_init_legal_unicode_char():
     tc = Case("Failure-Message")
     tc.add_failure_info(u("failure message with legal unicode char: [\x22]"))
+    #pylint: disable=unused-variable
     ts, tcs = serialize_and_read(Suite("test", [tc]))[0]
     verify_test_case(
         tcs[0], {"name": "Failure-Message"}, failure_message=u("failure message with legal unicode char: [\x22]")
@@ -198,6 +217,7 @@ def test_init_legal_unicode_char():
 def test_init_illegal_unicode_char():
     tc = Case("Failure-Message")
     tc.add_failure_info(u("failure message with illegal unicode char: [\x02]"))
+    #pylint: disable=unused-variable
     ts, tcs = serialize_and_read(Suite("test", [tc]))[0]
     verify_test_case(
         tcs[0], {"name": "Failure-Message"}, failure_message=u("failure message with illegal unicode char: []")
@@ -215,6 +235,7 @@ def test_init_utf8():
     tc.add_skipped_info(message="Skipped äöü", output="I skippäd!")
     tc.add_error_info(message="Skipped error äöü", output="I skippäd with an error!")
     test_suite = Suite("Test UTF-8", [tc])
+    #pylint: disable=unused-variable
     ts, tcs = serialize_and_read(test_suite, encoding="utf-8")[0]
     verify_test_case(
         tcs[0],
@@ -243,6 +264,7 @@ def test_init_unicode():
     tc.add_skipped_info(message=decode("Skipped äöü", "utf-8"), output=decode("I skippäd!", "utf-8"))
     tc.add_error_info(message=decode("Skipped error äöü", "utf-8"), output=decode("I skippäd with an error!", "utf-8"))
 
+    #pylint: disable=unused-variable
     ts, tcs = serialize_and_read(Suite("Test Unicode", [tc]))[0]
     verify_test_case(
         tcs[0],

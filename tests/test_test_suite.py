@@ -32,6 +32,7 @@ def test_single_suite_no_test_cases():
     package = "mypackage"
     timestamp = 1398382805
 
+    #pylint: disable=unused-variable
     ts, tcs = serialize_and_read(
         Suite(
             name="test",
@@ -66,6 +67,7 @@ def test_single_suite_no_test_cases_utf8():
         package=package,
         timestamp=timestamp,
     )
+    #pylint: disable=unused-variable
     ts, tcs = serialize_and_read(test_suite, to_file=True, prettyprint=True, encoding="utf-8")[0]
     assert ts.tagName == "testsuite"
     assert ts.attributes["package"].value == decode(package, "utf-8")
@@ -79,6 +81,7 @@ def test_single_suite_no_test_cases_unicode():
     package = decode("mypäckage", "utf-8")
     timestamp = 1398382805
 
+    #pylint: disable=unused-variable
     ts, tcs = serialize_and_read(
         Suite(
             name=decode("äöü", "utf-8"),
@@ -101,21 +104,25 @@ def test_single_suite_no_test_cases_unicode():
 
 
 def test_single_suite_to_file():
+    #pylint: disable=unused-variable
     ts, tcs = serialize_and_read(Suite("test", [Case("Test1")]), to_file=True)[0]
     verify_test_case(tcs[0], {"name": "Test1"})
 
 
 def test_single_suite_to_file_prettyprint():
+    #pylint: disable=unused-variable    
     ts, tcs = serialize_and_read(Suite("test", [Case("Test1")]), to_file=True, prettyprint=True)[0]
     verify_test_case(tcs[0], {"name": "Test1"})
 
 
 def test_single_suite_prettyprint():
+    #pylint: disable=unused-variable   
     ts, tcs = serialize_and_read(Suite("test", [Case("Test1")]), to_file=False, prettyprint=True)[0]
     verify_test_case(tcs[0], {"name": "Test1"})
 
 
 def test_single_suite_to_file_no_prettyprint():
+    #pylint: disable=unused-variable   
     ts, tcs = serialize_and_read(Suite("test", [Case("Test1")]), to_file=True, prettyprint=False)[0]
     verify_test_case(tcs[0], {"name": "Test1"})
 
