@@ -14,7 +14,7 @@ from six import PY2, StringIO
 junitpath = os.path.normpath('../junit_xml')
 sys.path.append(junitpath)
 
-from asserts import verify_test_case
+from .asserts import verify_test_case
 from junit_xml import TestCase as Case
 from junit_xml import TestSuite as Suite
 from junit_xml import decode, to_xml_report_string
