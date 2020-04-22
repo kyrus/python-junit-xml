@@ -25,7 +25,6 @@ jobs:
             pip install -e .
             pip install coverage
             pip install pytest
-            pip install pytest-sugar
             pip install six
 
       - save_cache:
