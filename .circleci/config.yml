@@ -26,6 +26,7 @@ jobs:
             pip install coverage
             pip install pytest
             pip install six
+            mkdir test-results
 
       - save_cache:
           paths:
@@ -36,7 +37,7 @@ jobs:
           name: run tests
           command: |
             . venv/bin/activate
-            coverage run -m pytest tests
+            coverage run -m pytest tests --junitxml=test-results/junit.xml
 
       - store_test_results:
           path: test-results
