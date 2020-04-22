@@ -15,7 +15,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - v1-dependencies-{{ checksum "requirements_dev.txt" }}
+            - v1-dependencies-{{ checksum "requirements.txt" }}
             - v1-dependencies-
       - run:
           name: install dependencies
@@ -25,11 +25,13 @@ jobs:
             pip install -e .
             pip install coverage
             pip install pytest
+            pip install pytest-sugar
+            pip install six
 
       - save_cache:
           paths:
             - ./venv
-          key: v1-dependencies-{{ checksum "requirements_dev.txt" }}
+          key: v1-dependencies-{{ checksum "requirements.txt" }}
 
       - run:
           name: run tests
