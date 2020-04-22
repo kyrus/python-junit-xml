@@ -94,8 +94,11 @@ Running the tests
 
 ```
     # activate your virtualenv
-    pip install tox
-    tox
+        pip install coverage
+        pip install pytest
+        pip install six
+        coverage run -m pytest tests
+```
 
 Releasing a new version
 -----------------------
