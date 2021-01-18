@@ -244,6 +244,14 @@ class TestSuite(object):
                 stderr_element.text = decode(case.stderr, encoding)
                 test_case_element.append(stderr_element)
 
+            # test properties
+            if case.properties:
+                props_element = ET.Element("properties")
+                for k, v in case.properties.items():
+                    attrs = {"name": decode(k, encoding), "value": decode(v, encoding)}
+                    ET.SubElement(props_element, "property", attrs)
+                test_case_element.append(props_element)
+
         return xml_element
 
     @staticmethod
@@ -380,6 +388,7 @@ class TestCase(object):
         log=None,
         url=None,
         allow_multiple_subelements=False,
+        properties=None,
     ):
         self.name = name
         self.assertions = assertions
@@ -400,6 +409,7 @@ class TestCase(object):
         self.failures = []
         self.skipped = []
         self.allow_multiple_subalements = allow_multiple_subelements
+        self.properties = properties
 
     def add_error_info(self, message=None, output=None, error_type=None):
         """Adds an error message, output, or both to the test case"""
