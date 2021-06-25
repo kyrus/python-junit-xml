@@ -318,8 +318,9 @@ def to_xml_report_file(file_descriptor, test_suites, prettyprint=True, encoding=
     Writes the JUnit XML document to a file.
     """
     xml_string = to_xml_report_string(test_suites, prettyprint=prettyprint, encoding=encoding)
-    # has problems with encoded str with non-ASCII (non-default-encoding) characters!
-    file_descriptor.write(xml_string)
+    # this fixes the problem  with encoded str with non-ASCII (non-default-encoding) characters!
+    string_for_output = xml_string.encode('utf8', 'replace')
+    file_descriptor.write(string_for_output)
 
 
 def _clean_illegal_xml_chars(string_to_clean):
