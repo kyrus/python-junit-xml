@@ -455,6 +455,10 @@ class TestCase(object):
             if output:
                 self.skipped[0]["output"] = output
 
+    def add_disabled_info(self, message=None, output=None):
+        self.is_enabled = False
+        self.add_skipped_info(message, output)
+
     def is_failure(self):
         """returns true if this test case is a failure"""
         return sum(1 for f in self.failures if f["message"] or f["output"]) > 0
