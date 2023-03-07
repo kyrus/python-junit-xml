@@ -399,7 +399,7 @@ class TestCase(object):
         self.errors = []
         self.failures = []
         self.skipped = []
-        self.allow_multiple_subalements = allow_multiple_subelements
+        self.allow_multiple_subelements = allow_multiple_subelements
 
     def add_error_info(self, message=None, output=None, error_type=None):
         """Adds an error message, output, or both to the test case"""
@@ -407,7 +407,7 @@ class TestCase(object):
         error["message"] = message
         error["output"] = output
         error["type"] = error_type
-        if self.allow_multiple_subalements:
+        if self.allow_multiple_subelements:
             if message or output:
                 self.errors.append(error)
         elif not len(self.errors):
@@ -426,7 +426,7 @@ class TestCase(object):
         failure["message"] = message
         failure["output"] = output
         failure["type"] = failure_type
-        if self.allow_multiple_subalements:
+        if self.allow_multiple_subelements:
             if message or output:
                 self.failures.append(failure)
         elif not len(self.failures):
@@ -444,7 +444,7 @@ class TestCase(object):
         skipped = {}
         skipped["message"] = message
         skipped["output"] = output
-        if self.allow_multiple_subalements:
+        if self.allow_multiple_subelements:
             if message or output:
                 self.skipped.append(skipped)
         elif not len(self.skipped):
