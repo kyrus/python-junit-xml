@@ -114,6 +114,14 @@ class TestSuite(object):
         self.stderr = stderr
         self.properties = properties
 
+    @staticmethod
+    def _add_properties(properties, element, encoding=None):
+        if properties:
+            props_element = ET.SubElement(element, "properties")
+            for k, v in properties.items():
+                attrs = {"name": decode(k, encoding), "value": decode(v, encoding)}
+                ET.SubElement(props_element, "property", attrs)
+
     def build_xml_doc(self, encoding=None):
         """
         Builds the XML document for the JUnit test suite.
@@ -152,11 +160,7 @@ class TestSuite(object):
         xml_element = ET.Element("testsuite", test_suite_attributes)
 
         # add any properties
-        if self.properties:
-            props_element = ET.SubElement(xml_element, "properties")
-            for k, v in self.properties.items():
-                attrs = {"name": decode(k, encoding), "value": decode(v, encoding)}
-                ET.SubElement(props_element, "property", attrs)
+        self._add_properties(self.properties, xml_element, encoding)
 
         # add test suite stdout
         if self.stdout:
@@ -196,6 +200,9 @@ class TestSuite(object):
 
             test_case_element = ET.SubElement(xml_element, "testcase", test_case_attributes)
 
+            # add test case properties
+            self._add_properties(case.properties, test_case_element, encoding)
+
             # failures
             for failure in case.failures:
                 if failure["output"] or failure["message"]:
@@ -222,7 +229,7 @@ class TestSuite(object):
                         error_element.text = decode(error["output"], encoding)
                     test_case_element.append(error_element)
 
-            # skippeds
+            # skipped
             for skipped in case.skipped:
                 attrs = {"type": "skipped"}
                 if skipped["message"]:
@@ -380,6 +387,7 @@ class TestCase(object):
         log=None,
         url=None,
         allow_multiple_subelements=False,
+        properties=None,
     ):
         self.name = name
         self.assertions = assertions
@@ -399,61 +407,37 @@ class TestCase(object):
         self.errors = []
         self.failures = []
         self.skipped = []
-        self.allow_multiple_subalements = allow_multiple_subelements
+        self.allow_multiple_subelements = allow_multiple_subelements
+        self.properties = properties
 
-    def add_error_info(self, message=None, output=None, error_type=None):
+    def _add_info(self, infos, message=None, output=None, type_=None):
+        info = {"message": message, "output": output}
+        if type_ is not None:
+            info["type"] = type_
+        if self.allow_multiple_subelements:
+            if message or output:
+                infos.append(info)
+        elif not len(infos):
+            infos.append(info)
+        else:
+            if message:
+                infos[0]["message"] = message
+            if output:
+                infos[0]["output"] = output
+            if type_:
+                infos[0]["type"] = type_
+
+    def add_error_info(self, message=None, output=None, error_type=""):
         """Adds an error message, output, or both to the test case"""
-        error = {}
-        error["message"] = message
-        error["output"] = output
-        error["type"] = error_type
-        if self.allow_multiple_subalements:
-            if message or output:
-                self.errors.append(error)
-        elif not len(self.errors):
-            self.errors.append(error)
-        else:
-            if message:
-                self.errors[0]["message"] = message
-            if output:
-                self.errors[0]["output"] = output
-            if error_type:
-                self.errors[0]["type"] = error_type
+        self._add_info(self.errors, message, output, error_type)
 
-    def add_failure_info(self, message=None, output=None, failure_type=None):
+    def add_failure_info(self, message=None, output=None, failure_type=""):
         """Adds a failure message, output, or both to the test case"""
-        failure = {}
-        failure["message"] = message
-        failure["output"] = output
-        failure["type"] = failure_type
-        if self.allow_multiple_subalements:
-            if message or output:
-                self.failures.append(failure)
-        elif not len(self.failures):
-            self.failures.append(failure)
-        else:
-            if message:
-                self.failures[0]["message"] = message
-            if output:
-                self.failures[0]["output"] = output
-            if failure_type:
-                self.failures[0]["type"] = failure_type
+        self._add_info(self.failures, message, output, failure_type)
 
     def add_skipped_info(self, message=None, output=None):
         """Adds a skipped message, output, or both to the test case"""
-        skipped = {}
-        skipped["message"] = message
-        skipped["output"] = output
-        if self.allow_multiple_subalements:
-            if message or output:
-                self.skipped.append(skipped)
-        elif not len(self.skipped):
-            self.skipped.append(skipped)
-        else:
-            if message:
-                self.skipped[0]["message"] = message
-            if output:
-                self.skipped[0]["output"] = output
+        self._add_info(self.skipped, message, output)
 
     def is_failure(self):
         """returns true if this test case is a failure"""
