@@ -3,10 +3,10 @@ from __future__ import with_statement
 
 from six import u
 
-from .asserts import verify_test_case
 from junit_xml import TestCase as Case
 from junit_xml import TestSuite as Suite
 from junit_xml import decode
+from .asserts import verify_test_case
 from .serializer import serialize_and_read
 
 
@@ -327,3 +327,9 @@ def test_multiple_skipped():
             {"message": "Second skipped", "output": "Second skipped message"},
         ],
     )
+
+
+def test_init_attributes():
+    tc = Case("Attributes", attributes={"xml:id": "1"})
+    ts, tcs = serialize_and_read(Suite("test", [tc]))[0]
+    verify_test_case(tcs[0], {"name": "Attributes", "xml:id": "1"})

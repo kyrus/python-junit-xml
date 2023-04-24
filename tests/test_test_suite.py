@@ -166,6 +166,12 @@ def test_attribute_disable():
     assert suites[0][0].attributes["disabled"].value == "1"
 
 
+def test_init_attributes():
+    tss = [Suite("suite1", attributes={"xml:id": "1"})]
+    suites = serialize_and_read(tss)
+    assert suites[0][0].attributes["xml:id"].value == "1"
+
+
 def test_stderr():
     suites = serialize_and_read(Suite(name="test", stderr="I am stderr!", test_cases=[Case(name="Test1")]))[0]
     assert suites[0].getElementsByTagName("system-err")[0].firstChild.data == "I am stderr!"

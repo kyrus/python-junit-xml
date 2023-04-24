@@ -94,6 +94,7 @@ class TestSuite(object):
         url=None,
         stdout=None,
         stderr=None,
+        attributes=None,
     ):
         self.name = name
         if not test_cases:
@@ -113,6 +114,7 @@ class TestSuite(object):
         self.stdout = stdout
         self.stderr = stderr
         self.properties = properties
+        self.attributes = attributes
 
     @staticmethod
     def _add_properties(properties, element, encoding=None):
@@ -156,6 +158,9 @@ class TestSuite(object):
             test_suite_attributes["log"] = decode(self.log, encoding)
         if self.url:
             test_suite_attributes["url"] = decode(self.url, encoding)
+        if self.attributes:
+            test_suite_attributes.update(self.attributes)
+
 
         xml_element = ET.Element("testsuite", test_suite_attributes)
 
@@ -197,6 +202,8 @@ class TestSuite(object):
                 test_case_attributes["log"] = decode(case.log, encoding)
             if case.url:
                 test_case_attributes["url"] = decode(case.url, encoding)
+            if case.attributes:
+                test_case_attributes.update(case.attributes)
 
             test_case_element = ET.SubElement(xml_element, "testcase", test_case_attributes)
 
@@ -388,6 +395,7 @@ class TestCase(object):
         url=None,
         allow_multiple_subelements=False,
         properties=None,
+        attributes=None,
     ):
         self.name = name
         self.assertions = assertions
@@ -409,6 +417,7 @@ class TestCase(object):
         self.skipped = []
         self.allow_multiple_subelements = allow_multiple_subelements
         self.properties = properties
+        self.attributes = attributes
 
     def _add_info(self, infos, message=None, output=None, type_=None):
         info = {"message": message, "output": output}
