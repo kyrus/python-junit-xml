@@ -1,6 +1,6 @@
-#!/usr/bin/env python
-from setuptools import setup, find_packages
 import os
+
+from setuptools import setup, find_packages
 
 
 def read(fname):
@@ -9,14 +9,14 @@ def read(fname):
 
 setup(
     name="junit-xml",
-    author="Brian Beyer",
-    author_email="brian@kyr.us",
-    url="https://github.com/kyrus/python-junit-xml",
+    author="Tikani",
+    author_email="",
+    url="https://github.com/gitiJumi/python-junit-xml",
     license="MIT",
     packages=find_packages(exclude=["tests"]),
     description="Creates JUnit XML test result documents that can be read by tools such as Jenkins",
     long_description=read("README.rst"),
-    version="1.9",
+    version="2.2",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
@@ -28,5 +28,5 @@ setup(
         "Topic :: Software Development :: Build Tools",
         "Topic :: Software Development :: Testing",
     ],
-    install_requires=["six"],
+    python_requires=">=3.8",
 )
