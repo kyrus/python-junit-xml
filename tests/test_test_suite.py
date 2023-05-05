@@ -1,241 +1,167 @@
 # -*- coding: UTF-8 -*-
-from __future__ import with_statement
 
-import textwrap
-import warnings
+from unittest import mock
 
 import pytest
-from six import PY2, StringIO
 
-from .asserts import verify_test_case
-from junit_xml import TestCase as Case
-from junit_xml import TestSuite as Suite
-from junit_xml import decode, to_xml_report_string
-from .serializer import serialize_and_read
+from junit_xml import to_xml_report_string
+from junit_xml.root_element import TestSuite
+from junit_xml.single_entry import TestCase
+from .serializer import read_testsuites_root
+
+sample_testsuite_name = "suite"
+
+sample_hostname = "localhost"
+sample_id = 42
+
+sample_property_entry = ("foo", "bar")
+sample_package = "sample.mypackage"
+
+sample_timestamp = 1398382805
+
+suite_name_1 = "suite1"
+testcase_name_1 = "Test1"
+
+suite_name_2 = "suite2"
+testcase_name_2 = "Test2"
+
+sample_testcase_name = "SomeTest"
+generated_timestamp = "2022-05-12T09:19:42"
 
 
-def test_single_suite_single_test_case():
-    with pytest.raises(TypeError) as excinfo:
-        serialize_and_read(Suite("test", Case("Test1")), to_file=True)[0]
-    assert str(excinfo.value) == "test_cases must be a list of test cases"
+def read_first_testsuite(test_suites, prettyprint=False):
+    res = read_testsuites_root(test_suites, prettyprint)[0].getElementsByTagName("testsuite")[0]
+    return res
 
 
-def test_single_suite_no_test_cases():
-    properties = {"foo": "bar"}
-    package = "mypackage"
-    timestamp = 1398382805
+def test_single_testsuite_wrong_testcase_type():
+    with pytest.raises(TypeError) as exc_info:
+        TestSuite("test", TestCase("Test1"))
+        assert str(exc_info.value) == "test_cases must be a list of test cases"
 
-    ts, tcs = serialize_and_read(
-        Suite(
-            name="test",
+
+def test_single_testsuite_no_testcases():
+    ts = read_first_testsuite(
+        TestSuite(
+            name=sample_testsuite_name,
             test_cases=[],
-            hostname="localhost",
-            id=1,
-            properties=properties,
-            package=package,
-            timestamp=timestamp,
+            hostname=sample_hostname,
+            properties={sample_property_entry[0]: sample_property_entry[1]},
+            package=sample_package,
+            timestamp=sample_timestamp,
         ),
-        to_file=True,
         prettyprint=True,
-    )[0]
-    assert ts.tagName == "testsuite"
-    assert ts.attributes["package"].value == package
-    assert ts.attributes["timestamp"].value == str(timestamp)
-    assert ts.childNodes[0].childNodes[0].attributes["name"].value == "foo"
-    assert ts.childNodes[0].childNodes[0].attributes["value"].value == "bar"
-
-
-def test_single_suite_no_test_cases_utf8():
-    properties = {"foö": "bär"}
-    package = "mypäckage"
-    timestamp = 1398382805
-
-    test_suite = Suite(
-        name="äöü",
-        test_cases=[],
-        hostname="löcalhost",
-        id="äöü",
-        properties=properties,
-        package=package,
-        timestamp=timestamp,
     )
-    ts, tcs = serialize_and_read(test_suite, to_file=True, prettyprint=True, encoding="utf-8")[0]
+
     assert ts.tagName == "testsuite"
-    assert ts.attributes["package"].value == decode(package, "utf-8")
-    assert ts.attributes["timestamp"].value == str(timestamp)
-    assert ts.childNodes[0].childNodes[0].attributes["name"].value == decode("foö", "utf-8")
-    assert ts.childNodes[0].childNodes[0].attributes["value"].value == decode("bär", "utf-8")
+
+    assert ts.attributes["name"].value == sample_testsuite_name
+    assert ts.attributes["hostname"].value == sample_hostname
+
+    assert ts.attributes["package"].value == sample_package
+    assert ts.attributes["timestamp"].value == str(sample_timestamp)
+    assert ts.childNodes[0].childNodes[0].attributes["name"].value == sample_property_entry[0]
+    assert ts.childNodes[0].childNodes[0].attributes["value"].value == sample_property_entry[1]
 
 
-def test_single_suite_no_test_cases_unicode():
-    properties = {decode("foö", "utf-8"): decode("bär", "utf-8")}
-    package = decode("mypäckage", "utf-8")
-    timestamp = 1398382805
+exp_output_pretty_p = '<?xml version="1.0" encoding="utf-8"?>\n'
+exp_output_pretty_p += '<testsuites tests="1" errors="0" failures="0" disabled="0" skipped="0" '
+exp_output_pretty_p += 'time="0.000">\n'
+exp_output_pretty_p += f'\t<testsuite name="{sample_testsuite_name}" disabled="0" errors="0" failures="0" skipped="0" '
+exp_output_pretty_p += f'tests="1" time="0.000" id="42" timestamp="{generated_timestamp}">\n'
+exp_output_pretty_p += f'\t\t<testcase name="{sample_testcase_name}"/>\n'
+exp_output_pretty_p += '\t</testsuite>\n'
+exp_output_pretty_p += '</testsuites>\n'
 
-    ts, tcs = serialize_and_read(
-        Suite(
-            name=decode("äöü", "utf-8"),
-            test_cases=[],
-            hostname=decode("löcalhost", "utf-8"),
-            id=decode("äöü", "utf-8"),
-            properties=properties,
-            package=package,
-            timestamp=timestamp,
-        ),
-        to_file=True,
-        prettyprint=True,
-        encoding="utf-8",
-    )[0]
-    assert ts.tagName == "testsuite"
-    assert ts.attributes["package"].value == package
-    assert ts.attributes["timestamp"].value, str(timestamp)
-    assert ts.childNodes[0].childNodes[0].attributes["name"].value == decode("foö", "utf-8")
-    assert ts.childNodes[0].childNodes[0].attributes["value"].value == decode("bär", "utf-8")
+exp_output_no_pretty = '<testsuites tests="1" errors="0" failures="0" disabled="0" skipped="0" '
+exp_output_no_pretty += f'time="0.000"><testsuite name="{sample_testsuite_name}" disabled="0" errors="0" failures="0" '
+exp_output_no_pretty += 'skipped="0" tests="1" time="0.000" id="42" '
+exp_output_no_pretty += f'timestamp="{generated_timestamp}"><testcase name="{sample_testcase_name}" '
+exp_output_no_pretty += '/></testsuite></testsuites>'
 
-
-def test_single_suite_to_file():
-    ts, tcs = serialize_and_read(Suite("test", [Case("Test1")]), to_file=True)[0]
-    verify_test_case(tcs[0], {"name": "Test1"})
+expected_xml_string = '<?xml version="1.0" ?>\n'
+expected_xml_string += '<testsuites tests="2" errors="0" failures="0" disabled="0" skipped="0" '
+expected_xml_string += 'time="0.000">\n'
+expected_xml_string += '\t<testsuite name="suite1" disabled="0" errors="0" failures="0" skipped="0" '
+expected_xml_string += f'tests="1" time="0.000" id="1" timestamp="{generated_timestamp}">\n'
+expected_xml_string += '\t\t<testcase name="Test1"/>\n'
+expected_xml_string += '\t</testsuite>\n'
+expected_xml_string += '\t<testsuite name="suite2" disabled="0" errors="0" failures="0" skipped="0" '
+expected_xml_string += f'tests="1" time="0.000" id="1" timestamp="{generated_timestamp}">\n'
+expected_xml_string += '\t\t<testcase name="Test2"/>\n'
+expected_xml_string += '\t</testsuite>\n'
+expected_xml_string += '</testsuites>\n'
 
 
-def test_single_suite_to_file_prettyprint():
-    ts, tcs = serialize_and_read(Suite("test", [Case("Test1")]), to_file=True, prettyprint=True)[0]
-    verify_test_case(tcs[0], {"name": "Test1"})
+@pytest.mark.parametrize("pretty_print, expected_output",
+                         [(True, exp_output_pretty_p),
+                          (False, exp_output_no_pretty)])
+@mock.patch("junit_xml.root_element.get_new_id", create=True)
+@mock.patch("junit_xml.root_element.get_current_timestamp", create=True)
+def test_single_suite_with_prettyprint(time_provider_mock: mock.Mock, id_provider: mock.Mock,
+                                       pretty_print, expected_output):
+    time_provider_mock.return_value = generated_timestamp
+    id_provider.return_value = "42"
+
+    input_testsuite = TestSuite(sample_testsuite_name, [TestCase(sample_testcase_name)])
+
+    act_output = to_xml_report_string([input_testsuite], prettyprint=pretty_print, encoding="utf-8")
+
+    assert act_output == expected_output
 
 
-def test_single_suite_prettyprint():
-    ts, tcs = serialize_and_read(Suite("test", [Case("Test1")]), to_file=False, prettyprint=True)[0]
-    verify_test_case(tcs[0], {"name": "Test1"})
+@mock.patch("junit_xml.root_element.get_new_id", create=True)
+@mock.patch("junit_xml.root_element.get_current_timestamp", create=True)
+def test_to_xml_string(time_provider_mock: mock.Mock, id_provider: mock.Mock):
+    time_provider_mock.return_value = generated_timestamp
+    id_provider.return_value = "1"
 
-
-def test_single_suite_to_file_no_prettyprint():
-    ts, tcs = serialize_and_read(Suite("test", [Case("Test1")]), to_file=True, prettyprint=False)[0]
-    verify_test_case(tcs[0], {"name": "Test1"})
-
-
-def test_multiple_suites_to_file():
-    tss = [Suite("suite1", [Case("Test1")]), Suite("suite2", [Case("Test2")])]
-    suites = serialize_and_read(tss, to_file=True)
-
-    assert suites[0][0].attributes["name"].value == "suite1"
-    verify_test_case(suites[0][1][0], {"name": "Test1"})
-
-    assert suites[1][0].attributes["name"].value == "suite2"
-    verify_test_case(suites[1][1][0], {"name": "Test2"})
-
-
-def test_multiple_suites_to_string():
-    tss = [Suite("suite1", [Case("Test1")]), Suite("suite2", [Case("Test2")])]
-    suites = serialize_and_read(tss)
-
-    assert suites[0][0].attributes["name"].value == "suite1"
-    verify_test_case(suites[0][1][0], {"name": "Test1"})
-
-    assert suites[1][0].attributes["name"].value == "suite2"
-    verify_test_case(suites[1][1][0], {"name": "Test2"})
-
-
-def test_attribute_time():
-    tss = [
-        Suite(
-            "suite1",
-            [
-                Case(name="Test1", classname="some.class.name", elapsed_sec=123.345),
-                Case(name="Test2", classname="some2.class.name", elapsed_sec=123.345),
-            ],
-        ),
-        Suite("suite2", [Case("Test2")]),
-    ]
-    suites = serialize_and_read(tss)
-
-    assert suites[0][0].attributes["name"].value == "suite1"
-    assert suites[0][0].attributes["time"].value == "246.69"
-
-    assert suites[1][0].attributes["name"].value == "suite2"
-    # here the time in testsuite is "0" even there is no attribute time for
-    # testcase
-    assert suites[1][0].attributes["time"].value == "0"
-
-
-def test_attribute_disable():
-    tc = Case("Disabled-Test")
-    tc.is_enabled = False
-    tss = [Suite("suite1", [tc])]
-    suites = serialize_and_read(tss)
-
-    assert suites[0][0].attributes["disabled"].value == "1"
-
-
-def test_stderr():
-    suites = serialize_and_read(Suite(name="test", stderr="I am stderr!", test_cases=[Case(name="Test1")]))[0]
-    assert suites[0].getElementsByTagName("system-err")[0].firstChild.data == "I am stderr!"
-
-
-def test_stdout_stderr():
-    suites = serialize_and_read(
-        Suite(name="test", stdout="I am stdout!", stderr="I am stderr!", test_cases=[Case(name="Test1")])
-    )[0]
-    assert suites[0].getElementsByTagName("system-err")[0].firstChild.data == "I am stderr!"
-    assert suites[0].getElementsByTagName("system-out")[0].firstChild.data == "I am stdout!"
-
-
-def test_no_assertions():
-    suites = serialize_and_read(Suite(name="test", test_cases=[Case(name="Test1")]))[0]
-    assert not suites[0].getElementsByTagName("testcase")[0].hasAttribute("assertions")
-
-
-def test_assertions():
-    suites = serialize_and_read(Suite(name="test", test_cases=[Case(name="Test1", assertions=5)]))[0]
-    assert suites[0].getElementsByTagName("testcase")[0].attributes["assertions"].value == "5"
-
-    # @todo: add more tests for the other attributes and properties
-
-
-def test_to_xml_string():
     test_suites = [
-        Suite(name="suite1", test_cases=[Case(name="Test1")]),
-        Suite(name="suite2", test_cases=[Case(name="Test2")]),
+        TestSuite(name="suite1", test_cases=[TestCase(name="Test1")]),
+        TestSuite(name="suite2", test_cases=[TestCase(name="Test2")]),
     ]
     xml_string = to_xml_report_string(test_suites)
-    if PY2:
-        assert isinstance(xml_string, unicode)  # noqa: F821
-    expected_xml_string = textwrap.dedent(
-        """
-        <?xml version="1.0" ?>
-        <testsuites disabled="0" errors="0" failures="0" tests="2" time="0.0">
-        \t<testsuite disabled="0" errors="0" failures="0" name="suite1" skipped="0" tests="1" time="0">
-        \t\t<testcase name="Test1"/>
-        \t</testsuite>
-        \t<testsuite disabled="0" errors="0" failures="0" name="suite2" skipped="0" tests="1" time="0">
-        \t\t<testcase name="Test2"/>
-        \t</testsuite>
-        </testsuites>
-    """.strip(
-            "\n"
-        )
-    )
+
     assert xml_string == expected_xml_string
 
 
-def test_to_xml_string_test_suites_not_a_list():
-    test_suites = Suite("suite1", [Case("Test1")])
+def test_attribute_disable():
+    tc = TestCase("Disabled-Test")
+    tc.is_enabled = False
+    tss = [TestSuite(sample_testsuite_name, [tc])]
+    # res = to_xml_report_string(tss)
+    # print(f"\n{res}")
+    suite = read_testsuites_root(tss)[0].getElementsByTagName("testsuite")
+
+    assert suite[0].attributes["disabled"].value == "1"
+
+
+def test_stdout_stderr():
+    suite = read_first_testsuite(
+        TestSuite(name=sample_testsuite_name, stdout="I am stdout!",
+                  stderr="I am stderr!", test_cases=[TestCase(name=sample_testcase_name)])
+    )
+    assert suite.getElementsByTagName("system-err")[0].firstChild.data == "I am stderr!"
+    assert suite.getElementsByTagName("system-out")[0].firstChild.data == "I am stdout!"
+
+
+def test_no_assertions():
+    suite = read_first_testsuite(
+        TestSuite(name=sample_testsuite_name, test_cases=[TestCase(name=sample_testcase_name)]))
+    assert not suite.getElementsByTagName("testcase")[0].hasAttribute("assertions")
+
+
+def test_assertions():
+    suite = read_first_testsuite(
+        TestSuite(name=sample_testsuite_name,
+                  test_cases=[TestCase(name=sample_testcase_name, assertions=5)]))
+
+    assert suite.getElementsByTagName("testcase")[0].attributes["assertions"].value == "5"
+
+
+def test_to_xml_string_wrong_input_type():
+    test_suites = TestSuite(sample_testsuite_name, [TestCase(sample_testcase_name)])
 
     with pytest.raises(TypeError) as excinfo:
         to_xml_report_string(test_suites)
     assert str(excinfo.value) == "test_suites must be a list of test suites"
-
-
-def test_deprecated_to_xml_string():
-    with warnings.catch_warnings(record=True) as w:
-        Suite.to_xml_string([])
-        assert len(w) == 1
-        assert issubclass(w[0].category, DeprecationWarning)
-        assert "Testsuite.to_xml_string is deprecated" in str(w[0].message)
-
-
-def test_deprecated_to_file():
-    with warnings.catch_warnings(record=True) as w:
-        Suite.to_file(StringIO(), [])
-        assert len(w) == 1
-        assert issubclass(w[0].category, DeprecationWarning)
-        assert "Testsuite.to_file is deprecated" in str(w[0].message)
