@@ -125,14 +125,20 @@ class TestSuite(object):
         # build the test suite element
         test_suite_attributes = dict()
         if any(c.assertions for c in self.test_cases):
-            test_suite_attributes["assertions"] = str(sum([int(c.assertions) for c in self.test_cases if c.assertions]))
-        test_suite_attributes["disabled"] = str(len([c for c in self.test_cases if not c.is_enabled]))
+            test_suite_attributes["assertions"] = str(
+                sum([int(c.assertions) for c in self.test_cases if c.assertions])
+            )
+        test_suite_attributes["disabled"] = str(
+            len([c for c in self.test_cases if not c.is_enabled])
+        )
         test_suite_attributes["errors"] = str(len([c for c in self.test_cases if c.is_error()]))
         test_suite_attributes["failures"] = str(len([c for c in self.test_cases if c.is_failure()]))
         test_suite_attributes["name"] = decode(self.name, encoding)
         test_suite_attributes["skipped"] = str(len([c for c in self.test_cases if c.is_skipped()]))
         test_suite_attributes["tests"] = str(len(self.test_cases))
-        test_suite_attributes["time"] = str(sum(c.elapsed_sec for c in self.test_cases if c.elapsed_sec))
+        test_suite_attributes["time"] = str(
+            sum(c.elapsed_sec for c in self.test_cases if c.elapsed_sec)
+        )
 
         if self.hostname:
             test_suite_attributes["hostname"] = decode(self.hostname, encoding)
@@ -355,7 +361,11 @@ def _clean_illegal_xml_chars(string_to_clean):
         (0x10FFFE, 0x10FFFF),
     ]
 
-    illegal_ranges = ["%s-%s" % (unichr(low), unichr(high)) for (low, high) in illegal_unichrs if low < sys.maxunicode]
+    illegal_ranges = [
+        "%s-%s" % (unichr(low), unichr(high))
+        for (low, high) in illegal_unichrs
+        if low < sys.maxunicode
+    ]
 
     illegal_xml_re = re.compile(u("[%s]") % u("").join(illegal_ranges))
     return illegal_xml_re.sub("", string_to_clean)
