@@ -3,10 +3,10 @@ from __future__ import with_statement
 
 from six import u
 
-from .asserts import verify_test_case
 from junit_xml import TestCase as Case
 from junit_xml import TestSuite as Suite
 from junit_xml import decode
+from .asserts import verify_test_case
 from .serializer import serialize_and_read
 
 
@@ -15,9 +15,14 @@ def test_init():
     verify_test_case(tcs[0], {"name": "Test1"})
 
 
-def test_init_classname():
-    ts, tcs = serialize_and_read(Suite("test", [Case(name="Test1", classname="some.class.name")]))[0]
+def test_init_classname_properties():
+    properties = {decode("foö", "utf-8"): decode("bär", "utf-8")}
+    ts, tcs = serialize_and_read(
+        Suite("test", [Case(name="Test1", classname="some.class.name", properties=properties)]))[0]
     verify_test_case(tcs[0], {"name": "Test1", "classname": "some.class.name"})
+    a = tcs[0].firstChild.firstChild.attributes
+    assert a["name"].value == decode("foö", "utf-8")
+    assert a["value"].value == decode("bär", "utf-8")
 
 
 def test_init_classname_time():
@@ -322,3 +327,9 @@ def test_multiple_skipped():
             {"message": "Second skipped", "output": "Second skipped message"},
         ],
     )
+
+
+def test_init_attributes():
+    tc = Case("Attributes", attributes={"xml:id": "1"})
+    ts, tcs = serialize_and_read(Suite("test", [tc]))[0]
+    verify_test_case(tcs[0], {"name": "Attributes", "xml:id": "1"})
