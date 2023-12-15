@@ -288,7 +288,7 @@ def to_xml_report_string(test_suites, prettyprint=True, encoding=None):
     attributes = defaultdict(int)
     for ts in test_suites:
         ts_xml = ts.build_xml_doc(encoding=encoding)
-        for key in ["disabled", "errors", "failures", "tests"]:
+        for key in ["disabled", "errors", "failures", "tests","skipped"]:
             attributes[key] += int(ts_xml.get(key, 0))
         for key in ["time"]:
             attributes[key] += float(ts_xml.get(key, 0))
