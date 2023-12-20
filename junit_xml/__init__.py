@@ -196,7 +196,7 @@ class TestSuite(object):
             return sum(ts.total_time for ts in self.test_suites)
         return sum(c.elapsed_sec for c in self.test_cases if c.elapsed_sec)
 
-    def update_test_suite_attributes(self, ts: TestSuite, attributes: dict[str, str], encoding: str | None=None):
+    def update_test_suite_attributes(self, ts: TestSuite, attributes: dict[str, str], encoding: str | None = None):
         """Updates test suite attributes according to self name, hostname, etc
 
         Args:
@@ -221,7 +221,27 @@ class TestSuite(object):
         if ts.url:
             attributes["url"] = decode(ts.url, encoding)
 
-    def get_test_suite_attributes(self, ts: TestSuite, ts_attributes: dict[str, str], encoding: str | None =None):
+    @staticmethod
+    def _add_stdout_stderr(xml_element, testcase, encoding: str | None = None) -> bool:
+        """Creates stdout and stderr subelment if testcase has stdout or stderr, always return True
+
+        Args:
+            xml_element: Element to add subelement from
+            testcase: Testcase to check stdout and stderr
+            encoding (str | None): Encoding in use. Defaults to None.
+
+        Returns:
+            bool: Always True
+        """
+        if testcase.stdout:
+            stdout_element = ET.SubElement(xml_element, "system-out")
+            stdout_element.text = decode(testcase.stdout, encoding)
+        if testcase.stderr:
+            stderr_element = ET.SubElement(xml_element, "system-err")
+            stderr_element.text = decode(testcase.stderr, encoding)
+        return True
+
+    def get_test_suite_attributes(self, ts: TestSuite, ts_attributes: dict[str, str], encoding: str | None = None):
         """Adds all the test suite attributes
 
         Args:
@@ -283,6 +303,7 @@ class TestSuite(object):
 
             test_case_element = ET.SubElement(xml_element, "testcase", test_case_attributes)
 
+            added_stdout_stderr: bool = False
             # failures
             for failure in case.failures:
                 if failure["output"] or failure["message"]:
@@ -294,6 +315,7 @@ class TestSuite(object):
                     failure_element = ET.Element("failure", attrs)
                     if failure["output"]:
                         failure_element.text = decode(failure["output"], encoding)
+                    added_stdout_stderr = TestSuite._add_stdout_stderr(failure_element, case, encoding)
                     test_case_element.append(failure_element)
 
             # errors
@@ -307,6 +329,7 @@ class TestSuite(object):
                     error_element = ET.Element("error", attrs)
                     if error["output"]:
                         error_element.text = decode(error["output"], encoding)
+                    added_stdout_stderr = TestSuite._add_stdout_stderr(error_element, case, encoding)
                     test_case_element.append(error_element)
 
             # skippeds
@@ -317,19 +340,21 @@ class TestSuite(object):
                 skipped_element = ET.Element("skipped", attrs)
                 if skipped["output"]:
                     skipped_element.text = decode(skipped["output"], encoding)
+                added_stdout_stderr = TestSuite._add_stdout_stderr(skipped_element, case, encoding)
                 test_case_element.append(skipped_element)
 
-            # test stdout
-            if case.stdout:
-                stdout_element = ET.Element("system-out")
-                stdout_element.text = decode(case.stdout, encoding)
-                test_case_element.append(stdout_element)
+            if added_stdout_stderr is False:
+                # test stdout
+                if case.stdout:
+                    stdout_element = ET.Element("system-out")
+                    stdout_element.text = decode(case.stdout, encoding)
+                    test_case_element.append(stdout_element)
 
-            # test stderr
-            if case.stderr:
-                stderr_element = ET.Element("system-err")
-                stderr_element.text = decode(case.stderr, encoding)
-                test_case_element.append(stderr_element)
+                # test stderr
+                if case.stderr:
+                    stderr_element = ET.Element("system-err")
+                    stderr_element.text = decode(case.stderr, encoding)
+                    test_case_element.append(stderr_element)
 
     def get_testcases_xml_element(self, tss: list[TestSuite] | TestSuite, ts_xml, encoding=None) -> ET.Element:
         for ts in tss:
@@ -343,7 +368,9 @@ class TestSuite(object):
                 test_suite_attributes = dict()
                 test_cases = ts.test_cases
                 if any(c.assertions for c in test_cases):
-                    test_suite_attributes["assertions"] = str(sum([int(c.assertions) for c in test_cases if c.assertions]))
+                    test_suite_attributes["assertions"] = str(
+                        sum([int(c.assertions) for c in test_cases if c.assertions])
+                    )
                 test_suite_attributes["disabled"] = str(len([c for c in test_cases if not c.is_enabled]))
                 test_suite_attributes["errors"] = str(len([c for c in test_cases if c.is_error()]))
                 test_suite_attributes["failures"] = str(len([c for c in test_cases if c.is_failure()]))
@@ -405,6 +432,7 @@ class TestSuite(object):
         )
         to_xml_report_file(file_descriptor, test_suites, prettyprint, encoding)
 
+
 def pprint_xml(xml_element, encoding="utf-8"):
     xml_string = ET.tostring(xml_element, encoding=encoding)
     # is encoded now
@@ -419,6 +447,7 @@ def pprint_xml(xml_element, encoding="utf-8"):
     if encoding:
         xml_string = xml_string.decode(encoding)
     print(xml_string)
+
 
 def to_xml_report_string(test_suites, prettyprint=True, encoding=None):
     """

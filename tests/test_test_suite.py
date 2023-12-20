@@ -175,11 +175,13 @@ def test_multiple_suites_to_string():
 
 
 def test_attribute_time():
+    tc = Case(name="Test1", classname="some.class.name", elapsed_sec=123.345, stdout="test1")
+    tc.add_failure_info("Shit happens")
     tss = [
         Suite(
             "suite1",
             [
-                Case(name="Test1", classname="some.class.name", elapsed_sec=123.345),
+                tc,
                 Case(name="Test2", classname="some2.class.name", elapsed_sec=123.345),
             ],
         ),
