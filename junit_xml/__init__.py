@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
+from __future__ import annotations
 import warnings
 from collections import defaultdict
 import sys
@@ -84,6 +85,7 @@ class TestSuite(object):
         self,
         name,
         test_cases=None,
+        test_suites=None,
         hostname=None,
         id=None,
         package=None,
@@ -96,13 +98,27 @@ class TestSuite(object):
         stderr=None,
     ):
         self.name = name
+        self.tss_mode = False
+
         if not test_cases:
             test_cases = []
+
+        if not test_suites:
+            test_suites = []
+        else:
+            self.tss_mode = True
         try:
             iter(test_cases)
         except TypeError:
             raise TypeError("test_cases must be a list of test cases")
+
+        try:
+            iter(test_suites)
+        except TypeError:
+            raise TypeError("test_suites must be a list of test cases or test suites")
+
         self.test_cases = test_cases
+        self.test_suites = test_suites
         self.timestamp = timestamp
         self.hostname = hostname
         self.id = id
@@ -114,62 +130,153 @@ class TestSuite(object):
         self.stderr = stderr
         self.properties = properties
 
-    def build_xml_doc(self, encoding=None):
+    @property
+    def total_tests_disabled(self) -> int:
+        """Gets total tests not enable of all test cases and test groups
+
+        Returns:
+            int: Total tests not enable in all test suite.
         """
-        Builds the XML document for the JUnit test suite.
-        Produces clean unicode strings and decodes non-unicode with the help of encoding.
-        @param encoding: Used to decode encoded strings.
-        @return: XML document with unicode string elements
+        if self.tss_mode:
+            return sum(ts.total_tests_disabled for ts in self.test_suites)
+        return len([c for c in self.test_cases if not c.is_enabled])
+
+    @property
+    def total_tests_error(self) -> int:
+        """Gets total tests with error of all test cases and test groups
+
+        Returns:
+            int: Total tests with error in all test suite.
         """
+        if self.tss_mode:
+            return sum(ts.total_tests_error for ts in self.test_suites)
+        return len([c for c in self.test_cases if c.is_error()])
 
-        # build the test suite element
-        test_suite_attributes = dict()
-        if any(c.assertions for c in self.test_cases):
-            test_suite_attributes["assertions"] = str(sum([int(c.assertions) for c in self.test_cases if c.assertions]))
-        test_suite_attributes["disabled"] = str(len([c for c in self.test_cases if not c.is_enabled]))
-        test_suite_attributes["errors"] = str(len([c for c in self.test_cases if c.is_error()]))
-        test_suite_attributes["failures"] = str(len([c for c in self.test_cases if c.is_failure()]))
-        test_suite_attributes["name"] = decode(self.name, encoding)
-        test_suite_attributes["skipped"] = str(len([c for c in self.test_cases if c.is_skipped()]))
-        test_suite_attributes["tests"] = str(len(self.test_cases))
-        test_suite_attributes["time"] = str(sum(c.elapsed_sec for c in self.test_cases if c.elapsed_sec))
+    @property
+    def total_tests_failure(self) -> int:
+        """Gets total tests failed of all test cases and test groups
 
-        if self.hostname:
-            test_suite_attributes["hostname"] = decode(self.hostname, encoding)
-        if self.id:
-            test_suite_attributes["id"] = decode(self.id, encoding)
-        if self.package:
-            test_suite_attributes["package"] = decode(self.package, encoding)
-        if self.timestamp:
-            test_suite_attributes["timestamp"] = decode(self.timestamp, encoding)
-        if self.file:
-            test_suite_attributes["file"] = decode(self.file, encoding)
-        if self.log:
-            test_suite_attributes["log"] = decode(self.log, encoding)
-        if self.url:
-            test_suite_attributes["url"] = decode(self.url, encoding)
+        Returns:
+            int: Total tests failed in all test suite.
+        """
+        if self.tss_mode:
+            return sum(ts.total_tests_failure for ts in self.test_suites)
+        return len([c for c in self.test_cases if c.is_failure()])
 
-        xml_element = ET.Element("testsuite", test_suite_attributes)
+    @property
+    def total_tests_skipped(self) -> int:
+        """Gets total tests skipped of all test cases and test groups
 
+        Returns:
+            int: Total tests skipped in all test suite.
+        """
+        if self.tss_mode:
+            return sum(ts.total_tests_skipped for ts in self.test_suites)
+        return len([c for c in self.test_cases if c.is_skipped()])
+
+    @property
+    def total_tests(self) -> int:
+        """Gets total tests of all test cases and test groups
+
+        Returns:
+            int: Total tests in all test suite.
+        """
+        if self.tss_mode:
+            return sum(ts.total_tests for ts in self.test_suites)
+        return len(self.test_cases)
+
+    @property
+    def total_time(self) -> int:
+        """Gets total time of all test cases and test groups
+
+        Returns:
+            int: Total time in all test suite.
+        """
+        if self.tss_mode:
+            return sum(ts.total_time for ts in self.test_suites)
+        return sum(c.elapsed_sec for c in self.test_cases if c.elapsed_sec)
+
+    def update_test_suite_attributes(self, ts: TestSuite, attributes: dict[str, str], encoding: str | None = None):
+        """Updates test suite attributes according to self name, hostname, etc
+
+        Args:
+            ts (TestSuite): Test suite of attributes
+            attributes (dict[str, str]): Attributes location dict.
+            encoding (str | None, optional): Encoding, ex. "utf-8". Defaults to None.
+        """
+        attributes["name"] = decode(ts.name, encoding)
+
+        if ts.hostname:
+            attributes["hostname"] = decode(ts.hostname, encoding)
+        if ts.id:
+            attributes["id"] = decode(ts.id, encoding)
+        if ts.package:
+            attributes["package"] = decode(ts.package, encoding)
+        if ts.timestamp:
+            attributes["timestamp"] = decode(ts.timestamp, encoding)
+        if ts.file:
+            attributes["file"] = decode(ts.file, encoding)
+        if ts.log:
+            attributes["log"] = decode(ts.log, encoding)
+        if ts.url:
+            attributes["url"] = decode(ts.url, encoding)
+
+    @staticmethod
+    def _add_stdout_stderr(xml_element, testcase, encoding: str | None = None) -> bool:
+        """Creates stdout and stderr subelment if testcase has stdout or stderr, always return True
+
+        Args:
+            xml_element: Element to add subelement from
+            testcase: Testcase to check stdout and stderr
+            encoding (str | None): Encoding in use. Defaults to None.
+
+        Returns:
+            bool: Always True
+        """
+        if testcase.stdout:
+            stdout_element = ET.SubElement(xml_element, "system-out")
+            stdout_element.text = decode(testcase.stdout, encoding)
+        if testcase.stderr:
+            stderr_element = ET.SubElement(xml_element, "system-err")
+            stderr_element.text = decode(testcase.stderr, encoding)
+        return True
+
+    def get_test_suite_attributes(self, ts: TestSuite, ts_attributes: dict[str, str], encoding: str | None = None):
+        """Adds all the test suite attributes
+
+        Args:
+            ts (TestSuite): Test suite to check for all the attributes
+            ts_attributes (dict[str, str]): Dictionary destination of attributes
+            encoding (str, optional): Enconding example "utf-8". Defaults to None.
+        """
+        self.update_test_suite_attributes(ts, ts_attributes, encoding)
+        ts_attributes["disabled"] = str(ts.total_tests_disabled)
+        ts_attributes["errors"] = str(ts.total_tests_error)
+        ts_attributes["failures"] = str(ts.total_tests_failure)
+        ts_attributes["skipped"] = str(ts.total_tests_skipped)
+        ts_attributes["tests"] = str(ts.total_tests)
+        ts_attributes["time"] = str(ts.total_time)
+
+    def add_test_suite_when_testcases(self, ts: TestSuite, xml_element, encoding=None):
         # add any properties
-        if self.properties:
+        if ts.properties:
             props_element = ET.SubElement(xml_element, "properties")
-            for k, v in self.properties.items():
+            for k, v in ts.properties.items():
                 attrs = {"name": decode(k, encoding), "value": decode(v, encoding)}
                 ET.SubElement(props_element, "property", attrs)
 
         # add test suite stdout
-        if self.stdout:
+        if ts.stdout:
             stdout_element = ET.SubElement(xml_element, "system-out")
-            stdout_element.text = decode(self.stdout, encoding)
+            stdout_element.text = decode(ts.stdout, encoding)
 
         # add test suite stderr
-        if self.stderr:
+        if ts.stderr:
             stderr_element = ET.SubElement(xml_element, "system-err")
-            stderr_element.text = decode(self.stderr, encoding)
+            stderr_element.text = decode(ts.stderr, encoding)
 
         # test cases
-        for case in self.test_cases:
+        for case in ts.test_cases:
             test_case_attributes = dict()
             test_case_attributes["name"] = decode(case.name, encoding)
             if case.assertions:
@@ -196,6 +303,7 @@ class TestSuite(object):
 
             test_case_element = ET.SubElement(xml_element, "testcase", test_case_attributes)
 
+            added_stdout_stderr: bool = False
             # failures
             for failure in case.failures:
                 if failure["output"] or failure["message"]:
@@ -207,6 +315,7 @@ class TestSuite(object):
                     failure_element = ET.Element("failure", attrs)
                     if failure["output"]:
                         failure_element.text = decode(failure["output"], encoding)
+                    added_stdout_stderr = TestSuite._add_stdout_stderr(failure_element, case, encoding)
                     test_case_element.append(failure_element)
 
             # errors
@@ -220,6 +329,7 @@ class TestSuite(object):
                     error_element = ET.Element("error", attrs)
                     if error["output"]:
                         error_element.text = decode(error["output"], encoding)
+                    added_stdout_stderr = TestSuite._add_stdout_stderr(error_element, case, encoding)
                     test_case_element.append(error_element)
 
             # skippeds
@@ -230,19 +340,70 @@ class TestSuite(object):
                 skipped_element = ET.Element("skipped", attrs)
                 if skipped["output"]:
                     skipped_element.text = decode(skipped["output"], encoding)
+                added_stdout_stderr = TestSuite._add_stdout_stderr(skipped_element, case, encoding)
                 test_case_element.append(skipped_element)
 
-            # test stdout
-            if case.stdout:
-                stdout_element = ET.Element("system-out")
-                stdout_element.text = decode(case.stdout, encoding)
-                test_case_element.append(stdout_element)
+            if added_stdout_stderr is False:
+                # test stdout
+                if case.stdout:
+                    stdout_element = ET.Element("system-out")
+                    stdout_element.text = decode(case.stdout, encoding)
+                    test_case_element.append(stdout_element)
 
-            # test stderr
-            if case.stderr:
-                stderr_element = ET.Element("system-err")
-                stderr_element.text = decode(case.stderr, encoding)
-                test_case_element.append(stderr_element)
+                # test stderr
+                if case.stderr:
+                    stderr_element = ET.Element("system-err")
+                    stderr_element.text = decode(case.stderr, encoding)
+                    test_case_element.append(stderr_element)
+
+    def get_testcases_xml_element(self, tss: list[TestSuite] | TestSuite, ts_xml, encoding=None) -> ET.Element:
+        for ts in tss:
+            if ts.tss_mode:
+                ts_attributes = {}
+                self.get_test_suite_attributes(ts, ts_attributes, encoding)
+
+                new_testsuite = ET.Element("testsuite", ts_attributes)
+                xml_element = self.get_testcases_xml_element(ts.test_suites, new_testsuite)
+            else:
+                test_suite_attributes = dict()
+                test_cases = ts.test_cases
+                if any(c.assertions for c in test_cases):
+                    test_suite_attributes["assertions"] = str(
+                        sum([int(c.assertions) for c in test_cases if c.assertions])
+                    )
+                test_suite_attributes["disabled"] = str(len([c for c in test_cases if not c.is_enabled]))
+                test_suite_attributes["errors"] = str(len([c for c in test_cases if c.is_error()]))
+                test_suite_attributes["failures"] = str(len([c for c in test_cases if c.is_failure()]))
+                test_suite_attributes["skipped"] = str(len([c for c in test_cases if c.is_skipped()]))
+                test_suite_attributes["tests"] = str(len(test_cases))
+                test_suite_attributes["time"] = str(sum(c.elapsed_sec for c in test_cases if c.elapsed_sec))
+
+                self.update_test_suite_attributes(ts, test_suite_attributes, encoding)
+
+                xml_element = ET.Element("testsuite", test_suite_attributes)
+
+                self.add_test_suite_when_testcases(ts, xml_element, encoding)
+
+            ts_xml.append(xml_element)
+        return ts_xml
+
+    def build_xml_doc(self, encoding=None):
+        """
+        Builds the XML document for the JUnit test suite.
+        Produces clean unicode strings and decodes non-unicode with the help of encoding.
+        @param encoding: Used to decode encoded strings.
+        @return: XML document with unicode string elements
+        """
+
+        # build the test suite element
+
+        ts_attributes = {}
+        self.get_test_suite_attributes(self, ts_attributes, encoding)
+
+        ts_xml = ET.Element("testsuite", ts_attributes)
+        xml_element = self.get_testcases_xml_element(self.test_suites, ts_xml, encoding)
+        if len(self.test_suites) == 0:
+            self.add_test_suite_when_testcases(self, xml_element, encoding)
 
         return xml_element
 
@@ -270,6 +431,22 @@ class TestSuite(object):
             DeprecationWarning,
         )
         to_xml_report_file(file_descriptor, test_suites, prettyprint, encoding)
+
+
+def pprint_xml(xml_element, encoding="utf-8"):
+    xml_string = ET.tostring(xml_element, encoding=encoding)
+    # is encoded now
+    xml_string = _clean_illegal_xml_chars(xml_string.decode(encoding or "utf-8"))
+    # is unicode now
+
+    # minidom.parseString() works just on correctly encoded binary strings
+    xml_string = xml_string.encode(encoding or "utf-8")
+    xml_string = xml.dom.minidom.parseString(xml_string)
+    # toprettyxml() produces unicode if no encoding is being passed or binary string with an encoding
+    xml_string = xml_string.toprettyxml(encoding=encoding)
+    if encoding:
+        xml_string = xml_string.decode(encoding)
+    print(xml_string)
 
 
 def to_xml_report_string(test_suites, prettyprint=True, encoding=None):

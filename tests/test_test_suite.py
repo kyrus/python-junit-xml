@@ -123,6 +123,45 @@ def test_multiple_suites_to_file():
     assert suites[1][0].attributes["name"].value == "suite2"
     verify_test_case(suites[1][1][0], {"name": "Test2"})
 
+def test_suite_inside_suites():
+    tss = [Suite("Root Suite", test_suites=[Suite("suite1", [Case("Test1")]), Suite("suite2", [Case("Test2")])])]
+
+    suites = serialize_and_read(tss, to_file=True)
+
+    assert suites[0][0].attributes["name"].value == "Root Suite"
+    verify_test_case(suites[0][1][0], {"name": "Test1"})
+
+    assert suites[1][0].attributes["name"].value == "suite1"
+    verify_test_case(suites[0][1][1], {"name": "Test2"})
+
+    assert suites[2][0].attributes["name"].value == "suite2"
+
+
+def test_suites_inside_suites():
+    tss = [
+        Suite("Root Suite", test_suites=[
+            Suite("suite1", test_suites=[
+                Suite("suite1_1", [Case("Test1")]), Suite("suite1_2", [Case("Test2"), Case("Test3")])
+                ]),
+            Suite("suite2", [
+                Case("Test4")
+                ])])]
+
+    suites = serialize_and_read(tss, to_file=True)
+
+    assert suites[0][0].attributes["name"].value == "Root Suite"
+    verify_test_case(suites[0][1][0], {"name": "Test1"})
+
+    assert suites[1][0].attributes["name"].value == "suite1"
+    verify_test_case(suites[0][1][1], {"name": "Test2"})
+
+    assert suites[2][0].attributes["name"].value == "suite1_1"
+    verify_test_case(suites[0][1][2], {"name": "Test3"})
+    assert suites[3][0].attributes["name"].value == "suite1_2"
+    verify_test_case(suites[0][1][3], {"name": "Test4"})
+    assert suites[4][0].attributes["name"].value == "suite2"
+
+
 
 def test_multiple_suites_to_string():
     tss = [Suite("suite1", [Case("Test1")]), Suite("suite2", [Case("Test2")])]
@@ -136,11 +175,13 @@ def test_multiple_suites_to_string():
 
 
 def test_attribute_time():
+    tc = Case(name="Test1", classname="some.class.name", elapsed_sec=123.345, stdout="test1")
+    tc.add_failure_info("Shit happens")
     tss = [
         Suite(
             "suite1",
             [
-                Case(name="Test1", classname="some.class.name", elapsed_sec=123.345),
+                tc,
                 Case(name="Test2", classname="some2.class.name", elapsed_sec=123.345),
             ],
         ),
@@ -203,10 +244,10 @@ def test_to_xml_string():
         """
         <?xml version="1.0" ?>
         <testsuites disabled="0" errors="0" failures="0" tests="2" time="0.0">
-        \t<testsuite disabled="0" errors="0" failures="0" name="suite1" skipped="0" tests="1" time="0">
+        \t<testsuite name="suite1" disabled="0" errors="0" failures="0" skipped="0" tests="1" time="0">
         \t\t<testcase name="Test1"/>
         \t</testsuite>
-        \t<testsuite disabled="0" errors="0" failures="0" name="suite2" skipped="0" tests="1" time="0">
+        \t<testsuite name="suite2" disabled="0" errors="0" failures="0" skipped="0" tests="1" time="0">
         \t\t<testcase name="Test2"/>
         \t</testsuite>
         </testsuites>
